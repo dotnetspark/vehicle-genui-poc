@@ -1,50 +1,89 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# vehicle-genui-poc Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Source Layout (NON-NEGOTIABLE)
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+All source code lives exclusively under `src/`. No exceptions.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+- `src/shared/` — types and utilities shared between demos
+- `src/etl/` — ETL script and Postgres schema
+- `src/demo-a-mcp-apps/` — Demo A: FastMCP wrapper + HTML chart assets
+- `src/demo-b-copilotkit/frontend/` — Demo B: Vite + React dashboard
+  No source file may be created outside `src/` without a constitution amendment.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Demo Isolation (NON-NEGOTIABLE)
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+Demo A (`src/demo-a-mcp-apps/`) and Demo B (`src/demo-b-copilotkit/`) share only the PostgreSQL database and types in `src/shared/`. No other code crosses demo boundaries. The isolation is deliberate — the comparison document depends on it.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### III. No Custom Query Tools (NON-NEGOTIABLE)
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+All database access goes through the standard `mcp-postgres` MCP server. No custom NL→SQL translation layers, no bespoke query tools, no ORMs. The schema design and table comments are the only prompt engineering surface. Raw SQL via psycopg2 parameterised queries in the ETL only.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### IV. Latest Dependencies (NON-NEGOTIABLE)
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+Always use the latest stable version of every dependency at the time of implementation. Never pin to an older version without an explicit documented reason in the PR.
+
+| Layer                  | Technology     | Minimum |
+| ---------------------- | -------------- | ------- |
+| Python                 | CPython        | 3.13+   |
+| Python package manager | uv             | latest  |
+| Node.js                | Node.js        | 22 LTS  |
+| JS package manager     | pnpm           | 9+      |
+| React                  | React          | 19+     |
+| TypeScript             | TypeScript     | 5.8+    |
+| Vite                   | Vite           | 6+      |
+| Tailwind CSS           | Tailwind CSS   | v4      |
+| Recharts               | Recharts       | 2.15+   |
+| CopilotKit             | @copilotkit/\* | latest  |
+| FastMCP                | fastmcp        | latest  |
+| PostgreSQL             | PostgreSQL     | 16      |
+| Chart.js (HTML assets) | Chart.js       | 4+      |
+
+### V. Documentation-First
+
+Specifications, plans, and tasks are written before code. The spec artefact is the source of truth. Code follows documentation — never the reverse. Every feature begins with `/speckit.specify` before any implementation.
+
+### VI. Mermaid-Only Diagrams
+
+All diagrams in `README.md`, `docs/`, and spec artefacts must use Mermaid. No ASCII art diagrams. No image files for diagrams.
+
+### VII. Simplicity
+
+This is a research PoC, not a production application. Favour readability and demonstrability over optimisation. Avoid over-engineering. YAGNI applies.
+
+## Git Workflow
+
+Every change follows this sequence without exception:
+
+1. GitHub Issue created first — no code without an issue
+2. Feature branch from main: `feat/NNN-short-description`, `fix/NNN-short-description`, `chore/NNN-short-description`
+3. Pull Request opened against main
+4. Squash merge for PRs with more than one commit — keeps main history linear
+5. Conventional commit messages: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`
+6. `CHANGELOG.md` updated in every PR — no exceptions
+7. SemVer tags after every milestone: `v0.1.0`, `v0.2.0`, `v0.3.0`, `v1.0.0`
+8. No direct pushes to main
+
+## Changelog and Roadmap
+
+`CHANGELOG.md` follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
+Every PR moves items into `[Unreleased]`. Tags move `[Unreleased]` into a versioned section.
+
+`docs/ROADMAP.md` is derived from `docs/PRD.md`. Every roadmap item links to a GitHub Issue.
+Roadmap items are marked ✅ in the same PR that completes them.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other practices and guidelines. All implementation decisions must be checked against these principles before proceeding.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Amendments require:
+
+- A dedicated GitHub Issue labelled `constitution`
+- Explicit rationale documented in the issue
+- PR reviewed and approved before merging
+- Amendment noted in `CHANGELOG.md`
+
+Claude Code must read this file at the start of every session. If any user request conflicts with a non-negotiable principle, surface the conflict explicitly and do not proceed silently.
+
+**Version**: 1.0.0 | **Ratified**: 2026-05-06 | **Last Amended**: 2026-05-06
