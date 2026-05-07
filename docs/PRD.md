@@ -51,7 +51,7 @@ The community-facing comparison document will score each approach on:
 ## 6. Out of scope
 
 - Authentication, multi-tenant deployment, production hosting.
-- Custom NL→SQL tools (forbidden by [the constitution](../.specify/memory/constitution.md)).
+- Custom NL→SQL tools (forbidden by [the constitution](../.specify/constitution.md)).
 - ORMs of any kind.
 - Any source code outside `src/`.
 

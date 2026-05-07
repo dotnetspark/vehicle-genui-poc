@@ -1,17 +1,20 @@
----
-name: speckit.constitution
-description: Validate or update the project constitution at .specify/memory/constitution.md.
----
+# /speckit.constitution
 
-Invoke the `speckit-constitution` skill to create or update the project
-constitution from interactive or provided principle inputs, ensuring all
-dependent templates stay in sync.
+You are helping establish and validate the project constitution for `vehicle-genui-poc`.
 
-Pass through any user-supplied arguments verbatim.
+## Your task
 
-After completion, confirm that:
+1. Read `.specify/constitution.md` in full
+2. Validate it contains all required sections:
+   - 7 Core Principles (I through VII), with NON-NEGOTIABLE ones explicitly marked
+   - Git Workflow section
+   - Changelog and Roadmap section
+   - Governance section with version/ratification footer
+3. If any section is missing or incomplete, propose additions and wait for approval
+4. If the constitution is complete, confirm it is ready and print a summary table of
+   all non-negotiable constraints
 
-1. `.specify/memory/constitution.md` is fully populated (no `[PLACEHOLDER]` text).
-2. The constitution version, ratification date and last-amended date are set.
-3. Any dependent templates under `.specify/templates/` that reference principles
-   have been updated to match.
+## Rules
+- Never modify the constitution without explicit user approval
+- Present any proposed changes as a diff, not as a rewrite
+- The constitution is the supreme law — flag any conflicts with user requests

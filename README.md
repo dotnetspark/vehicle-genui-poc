@@ -1,53 +1,135 @@
 # vehicle-genui-poc
 
-A research proof-of-concept comparing two Generative UI approaches against a single
-real dataset of UK vehicle registrations (DVLA VEH0120):
+> A side-by-side comparison of **MCP Apps** (SEP-1865) and **CopilotKit Static Generative UI**
+> on UK vehicle registration data. Two demos, one database, one comparison document.
 
-- **Demo A** — MCP Apps (SEP-1865) via FastMCP with embedded HTML chart assets.
-- **Demo B** — CopilotKit Static AG-UI on a Vite + React 19 dashboard.
+[![Changelog](https://img.shields.io/badge/changelog-keep--a--changelog-blue)](./CHANGELOG.md)
+[![Roadmap](https://img.shields.io/badge/roadmap-docs%2FROADMAP.md-green)](./docs/ROADMAP.md)
 
-The output of this PoC is a community-facing comparison document. It is **not** a
-production application.
+---
 
-## Status
+## What this is
 
-Bootstrap milestone — `v0.0.1`. See [docs/ROADMAP.md](docs/ROADMAP.md) for the
-milestone plan.
+This PoC explores two approaches to Generative UI — where an AI agent drives what the
+interface shows, in real time, from a natural language query. Both demos query the same
+PostgreSQL database (DVLA VEH0120 UK vehicle registrations) via the standard `mcp-postgres`
+MCP server. No custom query tools. No bespoke agent. Claude writes the SQL itself.
 
-## Documents
+The only difference is the rendering surface:
+- **Demo A** — charts appear inside Claude.ai as sandboxed iframes (MCP Apps)
+- **Demo B** — charts appear in a Vite + React dashboard (CopilotKit + AG-UI)
 
-- [.specify/memory/constitution.md](.specify/memory/constitution.md) — supreme law of the project
-- [docs/PRD.md](docs/PRD.md) — product requirements
-- [docs/ROADMAP.md](docs/ROADMAP.md) — milestone plan
-- [CHANGELOG.md](CHANGELOG.md) — release history
-- [CLAUDE.md](CLAUDE.md) — agent operating instructions
+See [`docs/COMPARISON.md`](./docs/COMPARISON.md) for the full findings.
 
-## Layout
+---
 
+## Architecture
+
+```mermaid
+graph TD
+    subgraph Shared["Shared Infrastructure"]
+        DB[(PostgreSQL 16\nvehicles DB)]
+        PG[mcp-postgres\nMCP Server]
+        DB --> PG
+    end
+
+    subgraph DemoA["Demo A — MCP Apps"]
+        WR[FastMCP Wrapper\n+ ui:// resources]
+        HOST[Claude.ai / Claude Desktop\nSEP-1865 host]
+        IFRAME[Sandboxed iframe\nChart.js HTML]
+        PG --> WR
+        WR --> HOST
+        HOST --> IFRAME
+    end
+
+    subgraph DemoB["Demo B — CopilotKit"]
+        CK[CopilotKit Runtime\nMcpServerManager]
+        DASH[Vite + React Dashboard\nuseFrontendTool]
+        PG --> CK
+        CK --> DASH
+    end
+
+    USER1[User] -->|NL query| HOST
+    USER2[User] -->|NL query| DASH
 ```
-src/                        ALL source code lives here
-  shared/                   shared types and utilities
-  etl/                      Python ETL + schema
-  demo-a-mcp-apps/          FastMCP wrapper + HTML chart assets
-  demo-b-copilotkit/
-    frontend/               Vite + React dashboard
-data/                       raw CSV (gitignored — see data/README.md)
-specs/                      Spec Kit artefacts per feature branch
-docs/                       PRD, ROADMAP, COMPARISON, ADRs
+
+---
+
+## Database Schema
+
+```mermaid
+erDiagram
+    dim_vehicle {
+        int vehicle_id PK
+        text body_type
+        text make
+        text gen_model
+        text model
+        text fuel
+    }
+    dim_period {
+        int period_id PK
+        smallint year
+        smallint quarter
+        text period_label
+        boolean is_full_quarter
+    }
+    fact_registrations {
+        int vehicle_id FK
+        int period_id FK
+        text licence_status
+        int count
+    }
+    dim_vehicle ||--o{ fact_registrations : "vehicle_id"
+    dim_period  ||--o{ fact_registrations : "period_id"
 ```
 
-## Workflow
+---
 
-This project follows Spec Kit spec-driven development. Every feature begins with a
-slash command from `.claude/commands/`:
+## Quick Start
 
-| Command                 | Purpose                                                     |
-| ----------------------- | ----------------------------------------------------------- |
-| `/speckit.constitution` | Validate or update project principles                       |
-| `/speckit.specify`      | Start a new feature — generates `spec.md`                   |
-| `/speckit.plan`         | Generate `plan.md` and `research.md` from an approved spec  |
-| `/speckit.tasks`        | Generate `tasks.md` from an approved plan                   |
-| `/speckit.analyze`      | Cross-check spec, plan and tasks before implementation      |
-| `/speckit.implement`    | Implement tasks one at a time                               |
+Prerequisites: Docker, Python 3.13+, Node.js 22+, `uv`, `pnpm`
 
-Always run `/speckit.analyze` before `/speckit.implement`.
+```bash
+# 1. Start the database
+docker compose up -d
+
+# 2. Load the data (place df_VEH0120_GB.csv in data/ first)
+cd src/etl && uv run python etl.py
+
+# 3. Demo A — open Claude Desktop, paste src/demo-a-mcp-apps/claude-desktop-config.json
+#    into your claude_desktop_config.json, restart Claude Desktop, use the system prompt
+#    in src/demo-a-mcp-apps/system-prompt.md
+
+# 4. Demo B — start the dashboard
+cd src/demo-b-copilotkit/frontend && pnpm install && pnpm dev
+```
+
+---
+
+## Example Queries (both demos)
+
+- "Fuel breakdown for Cars in 2024"
+- "EV growth trend since 2015"
+- "Top 10 makes by licensed vehicles"
+- "Licensed vs SORN for motorcycles over time"
+- "Which fuel type grew fastest in the last 5 years?"
+
+---
+
+## Project Navigation
+
+| Document | Purpose |
+|---|---|
+| [`docs/PRD.md`](./docs/PRD.md) | Product requirements and success criteria |
+| [`docs/ROADMAP.md`](./docs/ROADMAP.md) | Milestones and issue tracker |
+| [`docs/COMPARISON.md`](./docs/COMPARISON.md) | Final comparison findings |
+| [`CHANGELOG.md`](./CHANGELOG.md) | Version history |
+| [`.specify/constitution.md`](./.specify/constitution.md) | Non-negotiable project principles |
+
+---
+
+## Dataset
+
+DVLA VEH0120 — UK licensed and SORN vehicles by make, model, fuel type, body type,
+and quarter. ~240k source rows → ~19M fact rows after ETL. Coverage: 1994 Q4 → 2025 Q2.

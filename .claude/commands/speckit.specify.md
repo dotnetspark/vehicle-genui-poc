@@ -1,20 +1,58 @@
----
-name: speckit.specify
-description: Start a new feature — generates spec.md from a natural-language description.
----
+# /speckit.specify
 
-Invoke the `speckit-specify` skill to create or update the feature specification
-from the natural-language feature description supplied by the user.
+You are creating a feature specification for `vehicle-genui-poc` following the
+Spec Kit SDD methodology.
 
-Pass the user's description through as the feature description.
+## Pre-flight checklist (complete before writing anything)
 
-The skill is responsible for:
+- [ ] Read `.specify/constitution.md` in full
+- [ ] Identify the next available feature number by scanning `specs/` directory
+- [ ] Confirm the feature aligns with `docs/PRD.md` and `docs/ROADMAP.md`
+- [ ] Confirm a GitHub Issue exists (or note that one must be created first)
 
-1. Running the `before_specify` git hook (`speckit.git.feature`) if enabled in
-   `.specify/extensions.yml`.
-2. Producing `specs/<feature-branch>/spec.md` from
-   `.specify/templates/spec-template.md`.
-3. Running the `after_specify` git hook (`speckit.git.commit`) if enabled.
+## Output artefacts
 
-After completion, remind the user that the next step is `/speckit.plan`, not
-implementation.
+Create the following files under `specs/[feature-branch-name]/`:
+
+### spec.md
+```markdown
+# Feature NNN — [Title]
+
+## GitHub Issue
+Closes #NNN
+
+## Problem Statement
+[What problem does this feature solve?]
+
+## User Stories
+- As a [role], I want [goal] so that [benefit]
+
+## Acceptance Criteria
+- [ ] Criterion 1
+- [ ] Criterion 2
+
+## Out of Scope
+- [Explicit exclusions]
+
+## Dependencies
+- [Other features or issues this depends on]
+
+## Constitution Compliance
+- [ ] All source code in src/
+- [ ] Demo isolation maintained
+- [ ] No custom query tools introduced
+- [ ] Latest dependency versions used
+- [ ] CHANGELOG.md will be updated in the PR
+- [ ] Mermaid diagrams used (no ASCII)
+```
+
+### [NEEDS CLARIFICATION] items
+If any acceptance criteria are ambiguous, list them as `[NEEDS CLARIFICATION: ...]`
+items inside the spec and stop. Do not proceed to planning until all clarifications
+are resolved.
+
+## Rules
+- Never start a spec without reading the constitution first
+- Branch name format: `feat/NNN-short-description`
+- One spec per feature — never combine multiple features in one spec
+- Flag any constitution violations immediately

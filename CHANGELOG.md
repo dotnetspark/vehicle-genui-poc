@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Spec Kit SDD scaffold: `.specify/memory/constitution.md`, templates, slash
+- Spec Kit SDD scaffold: `.specify/constitution.md`, templates, slash
   commands under `.claude/commands/`.
 - Empty source tree under `src/` with placeholders for `shared/`, `etl/`,
   `demo-a-mcp-apps/`, and `demo-b-copilotkit/frontend/`.
