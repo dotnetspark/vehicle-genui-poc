@@ -11,17 +11,18 @@ flowchart LR
     D --> E[v1.0.0<br/>Feature 004 — Comparison + polish]
 ```
 
-## v0.0.1 — Bootstrap (current)
+## v0.0.1 — Bootstrap ✅
 
 - Spec Kit SDD scaffold validated.
 - Constitution in place.
 - Empty source tree, docs, and slash commands ready.
 - Repository tagged `v0.0.1`.
 
-## v0.1.0 — Feature 001: ETL + schema
+## v0.1.0 — Feature 001: ETL + schema ✅
 
 - PostgreSQL 16 via `docker compose up -d`.
-- Python ETL (CPython 3.13+, `uv`) loads DVLA VEH0120 into the schema.
+- Python ETL (CPython 3.14+, `uv`) loads DVLA VEH0120 into the schema
+  (139,553 dim_vehicles · 82 periods · 19,666,224 facts).
 - Schema: `dim_vehicle`, `dim_period`, `fact_registrations`, `v_schema_summary`.
 - Table comments populated — they are the LLM's only schema documentation.
 - Spec prompt: [specs/prompt-02-feature-001-etl.md](../specs/prompt-02-feature-001-etl.md).
