@@ -32,8 +32,8 @@ Milestone: `v0.1.0`
 - No pgAdmin service — user has pgAdmin 4 locally (spec resolution §2).
 - Compose lives at repo root — config, not source (Article I clause).
 
-- [ ] Implementation
-- [ ] Verification (`docker compose up -d && psql "$DATABASE_URL" -c '\l'` succeeds)
+- [x] Implementation
+- [x] Verification — `docker compose ps` reports healthy; `docker compose exec db pg_isready -U postgres -d vehicles` accepts connections; `\l` shows the `vehicles` database; running PostgreSQL 16.13 on `postgres:16-alpine`
 
 ---
 
