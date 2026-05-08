@@ -45,8 +45,8 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
   package managers.
 - Verify pinned major versions match research.md exactly.
 
-- [ ] Implementation
-- [ ] Verification (`npm install` clean; `npm run build` produces `dist/mcp-app.html`)
+- [x] Implementation — package.json, tsconfig.json, vite.config.ts, mcp-app.html placeholder; cross-env added for Windows compat
+- [x] Verification — `npm install` resolved 151 packages with 0 vulnerabilities; `npm run build` produced `dist/mcp-app.html` (194 B placeholder) via Vite 6.4.2 + vite-plugin-singlefile
 
 ---
 
