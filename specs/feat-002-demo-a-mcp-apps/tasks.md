@@ -234,6 +234,8 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
   - PETROL / DIESEL → grey
   - GAS → amber
   - OTHER FUEL TYPES → light grey
+- Empty `rows` (zero results) → `pickChartType` returns `"table"`, and the
+  table renderer shows a `"No data"` message (not a blank `<div>`).
 - `mcp-app.ts` updated to call `renderFromRows` (replacing the stub).
 
 **Files:** `src/demo-a-mcp-apps/src/chart-renderer.ts` (new),
@@ -352,8 +354,12 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
   - prerequisites (Feature 001 done; Postgres up; ETL ran once)
   - one-time `setup-readonly-role.sql` apply step
   - `npm install && npm run build && npm run serve`
-  - paste/merge `claude-desktop-config.json` into Claude Desktop's config
-  - paste `system-prompt.md` into Claude Desktop's "Custom instructions" / project setup
+  - paste/merge `claude-desktop-config.json` into Claude Desktop's config file
+    (Windows: `%APPDATA%\Claude\claude_desktop_config.json`; macOS:
+    `~/Library/Application Support/Claude/claude_desktop_config.json`)
+  - paste contents of `system-prompt.md` into **Claude Desktop → Settings →
+    Profile → Custom instructions** (user-level; applies across all
+    conversations) — confirms the LLM uses the schema-first SQL workflow
   - restart Claude Desktop, ask any of the five golden-path questions
 - Root `README.md` Quick Start section adds a Demo A step pointing at
   `src/demo-a-mcp-apps/README.md`.
