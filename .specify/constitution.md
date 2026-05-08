@@ -6,15 +6,27 @@
 All source code lives exclusively under `src/`. No exceptions.
 - `src/shared/` — types and utilities shared between demos
 - `src/etl/` — ETL script and Postgres schema
-- `src/demo-a-mcp-apps/` — Demo A: FastMCP wrapper + HTML chart assets
+- `src/demo-a-mcp-apps/` — Demo A: TypeScript MCP server + bundled UI (MCP Apps SDK)
 - `src/demo-b-copilotkit/frontend/` — Demo B: Vite + React dashboard
 No source file may be created outside `src/` without a constitution amendment.
 
 ### II. Demo Isolation (NON-NEGOTIABLE)
 Demo A (`src/demo-a-mcp-apps/`) and Demo B (`src/demo-b-copilotkit/`) share only the PostgreSQL database and types in `src/shared/`. No other code crosses demo boundaries. The isolation is deliberate — the comparison document depends on it.
 
-### III. No Custom Query Tools (NON-NEGOTIABLE)
-All database access goes through the standard `mcp-postgres` MCP server. No custom NL→SQL translation layers, no bespoke query tools, no ORMs. The schema design and table comments are the only prompt engineering surface. Raw SQL via psycopg2 parameterised queries in the ETL only.
+### III. Schema-First, LLM-Writes-SQL (NON-NEGOTIABLE)
+
+The schema and its `COMMENT ON` statements are the LLM's only prompt-engineering surface. The LLM writes raw SQL by reading the schema cold. No NL→SQL translation layers. No bespoke query helpers that hardcode question-specific patterns. No ORM.
+
+Each demo MUST use the canonical server SDK for its rendering surface, owning a generic SQL-execution tool that takes a SQL string from the LLM and returns rows:
+
+- **Demo A (MCP Apps):** TypeScript server using `@modelcontextprotocol/sdk` and `@modelcontextprotocol/ext-apps`, executing SQL via the `pg` client over Streamable HTTP transport, per the official [Build an MCP App](https://modelcontextprotocol.io/extensions/apps/build) guide.
+- **Demo B (CopilotKit):** TypeScript per the canonical CopilotKit Runtime pattern (locked in Feature 003 spec).
+
+The demo's SQL-execution tool is generic: it accepts a SQL string from the LLM and returns rows. It does **not** translate natural language, **not** compose question-specific templates, **not** introspect user intent.
+
+Raw SQL via `psycopg2` parameterised queries in the Python ETL is unchanged.
+
+**Amendment record:** Original v1.0.0 text required all DB access via the `@modelcontextprotocol/server-postgres` reference server. Amended on 2026-05-08 (v1.1.0, issue #10) to align with the canonical MCP Apps server pattern (each server owns its tool). Original intent preserved: schema comments are the only prompt-engineering surface; LLM writes raw SQL; no NL→SQL helpers.
 
 ### IV. Latest Dependencies (NON-NEGOTIABLE)
 Always use the latest stable version of every dependency at the time of implementation. Never pin to an older version without an explicit documented reason in the PR.
@@ -31,7 +43,8 @@ Always use the latest stable version of every dependency at the time of implemen
 | Tailwind CSS | Tailwind CSS | v4 |
 | Recharts | Recharts | 2.15+ |
 | CopilotKit | @copilotkit/* | latest |
-| FastMCP | fastmcp | latest |
+| MCP App SDK | @modelcontextprotocol/ext-apps + @modelcontextprotocol/sdk | latest |
+| Postgres client (demos) | pg | latest |
 | PostgreSQL | PostgreSQL | 16 |
 | Chart.js (HTML assets) | Chart.js | 4+ |
 
@@ -76,4 +89,4 @@ Amendments require:
 
 Claude Code must read this file at the start of every session. If any user request conflicts with a non-negotiable principle, surface the conflict explicitly and do not proceed silently.
 
-**Version**: 1.0.0 | **Ratified**: 2026-05-06 | **Last Amended**: 2026-05-06
+**Version**: 1.1.0 | **Ratified**: 2026-05-06 | **Last Amended**: 2026-05-08

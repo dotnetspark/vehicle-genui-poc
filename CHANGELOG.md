@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Constitution v1.1.0** — Article III amended from "No Custom Query Tools"
+  to "Schema-First, LLM-Writes-SQL". The original requirement that all DB
+  access go through `@modelcontextprotocol/server-postgres` is dropped; each
+  demo now uses the canonical server SDK for its rendering surface and owns
+  a generic SQL-execution tool. Intent preserved: schema `COMMENT ON`
+  statements are the LLM's only prompt-engineering surface; LLM writes raw
+  SQL; no NL→SQL helpers; no ORMs. Tech-stack table updated: `FastMCP` row
+  removed; `@modelcontextprotocol/ext-apps` + `@modelcontextprotocol/sdk` and
+  `pg` rows added. `CLAUDE.md` hard-constraints, project-layout, and
+  tech-stack sections updated to match. Closes #10.
+
 ### Added
 
 - **Feature 001 — ETL + Postgres schema foundation** (#1, #2, #3, #4):

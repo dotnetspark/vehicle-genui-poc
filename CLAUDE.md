@@ -47,7 +47,7 @@ Always run `/speckit.analyze` before `/speckit.implement`.
 src/                        # ALL source code — never write code outside here
   shared/                   # Shared types and utilities
   etl/                      # Python ETL + schema
-  demo-a-mcp-apps/          # Demo A: FastMCP wrapper + HTML chart assets
+  demo-a-mcp-apps/          # Demo A: TypeScript MCP server + bundled UI (MCP Apps SDK)
   demo-b-copilotkit/
     frontend/               # Vite + React dashboard
 data/                       # Raw CSV (gitignored — user places file here)
@@ -74,7 +74,8 @@ docs/                       # PRD, ROADMAP, COMPARISON, ADRs
 | Tailwind CSS           | Tailwind CSS   | v4      |
 | Recharts               | Recharts       | 2.15+   |
 | CopilotKit             | @copilotkit/\* | latest  |
-| MCP server             | FastMCP        | latest  |
+| MCP App SDK            | @modelcontextprotocol/ext-apps + @modelcontextprotocol/sdk | latest |
+| Postgres client (demos)| pg             | latest  |
 | Database               | PostgreSQL     | 16      |
 | Chart.js (HTML assets) | Chart.js       | 4+      |
 
@@ -96,11 +97,11 @@ docs/                       # PRD, ROADMAP, COMPARISON, ADRs
 ## Hard constraints — never violate these
 
 - No source code outside `src/`
-- No custom NL→SQL query tools — all DB access via standard `mcp-postgres`
-- No ORM — raw SQL with psycopg2 parameterised queries
+- No NL→SQL helpers — schema `COMMENT ON` statements are the LLM's only prompt-engineering surface; each demo owns a generic SQL-execution tool per its canonical SDK
+- No ORM — raw SQL with parameterised queries (psycopg2 in the Python ETL; pg in the demo servers)
 - Demo A and Demo B share only the database — no cross-demo code
 - No ASCII diagrams — Mermaid only in all documentation
-- No ORMs, no monkeypatching, no undocumented workarounds
+- No monkeypatching, no undocumented workarounds
 
 ---
 
