@@ -69,8 +69,8 @@ Milestone: `v0.1.0`
 - `period_label` is computed `'YYYY QN'` text; `is_full_quarter` is boolean
   (CSV may include partial-quarter columns at the trailing edge).
 
-- [ ] Implementation
-- [ ] Verification (file syntactically valid; no schema application yet)
+- [x] Implementation
+- [x] Verification — `psql -f schema.sql` ran cleanly producing CREATE TABLE × 3, CREATE VIEW × 1, COMMENT × 19 (table + column + view comments). Categorical enumerations sampled from the CSV: 6 body types, 11 fuels, 2 licence statuses.
 
 ### Task 2.2 — Apply schema and verify comments came through
 
@@ -95,8 +95,8 @@ Milestone: `v0.1.0`
 - A native `psql` install is not required; the container's `psql` is used via
   `docker compose exec`.
 
-- [ ] Implementation (apply schema)
-- [ ] Verification (`\dt+`, `\d+` outputs match spec)
+- [x] Implementation (apply schema) — applied via `docker compose exec -T db psql ... < src/etl/schema.sql`
+- [x] Verification (`\dt+`, `\d+` outputs match spec) — all 3 tables + 1 view present, every table/column comment landed (verified via `\dt+` and `\d+ dim_vehicle`)
 
 ---
 
@@ -118,8 +118,8 @@ Milestone: `v0.1.0`
 - Versions verified in research.md as the latest stable on 2026-05-07.
 - Do not pin uv itself — it is a system tool, not a project dep.
 
-- [ ] Implementation
-- [ ] Verification (`uv pip install` clean exit)
+- [x] Implementation
+- [x] Verification — `.venv` created with Python 3.14.3 (auto-installed by uv); `uv pip install -r src/etl/requirements.txt` resolved 3 direct + 4 transitive packages cleanly
 
 ### Task 3.2 — Implement `etl.py`
 
