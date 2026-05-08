@@ -91,17 +91,30 @@ erDiagram
 Prerequisites: Docker, Python 3.13+, Node.js 22+, `uv`, `pnpm`
 
 ```bash
-# 1. Start the database
+# 1. Set up your local env file (defaults are fine for local dev)
+cp .env.example .env
+
+# 2. Start the database
 docker compose up -d
 
-# 2. Load the data (place df_VEH0120_GB.csv in data/ first)
-cd src/etl && uv run python etl.py
+# 3. Apply the schema
+docker compose exec -T db psql -U postgres -d vehicles < src/etl/schema.sql
 
-# 3. Demo A — open Claude Desktop, paste src/demo-a-mcp-apps/claude-desktop-config.json
+# 4. Create the Python venv and install ETL deps
+uv venv .venv --python 3.14
+uv pip install -r src/etl/requirements.txt
+
+# 5. Load the data (place df_VEH0120_GB.csv in data/ first).
+#    First run takes ~35 min on Docker Desktop / Windows (one-time onboarding cost);
+#    subsequent runs return in ~3 s via fast-skip. To force a reload:
+#      docker compose exec db psql -U postgres -d vehicles -c 'TRUNCATE fact_registrations;'
+uv run python src/etl/etl.py
+
+# 6. Demo A — open Claude Desktop, paste src/demo-a-mcp-apps/claude-desktop-config.json
 #    into your claude_desktop_config.json, restart Claude Desktop, use the system prompt
 #    in src/demo-a-mcp-apps/system-prompt.md
 
-# 4. Demo B — start the dashboard
+# 7. Demo B — start the dashboard
 cd src/demo-b-copilotkit/frontend && pnpm install && pnpm dev
 ```
 

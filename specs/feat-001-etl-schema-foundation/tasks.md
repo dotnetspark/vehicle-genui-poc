@@ -213,8 +213,8 @@ Milestone: `v0.1.0`
 - Update example queries section if anything from the actual data informs
   what to demo.
 
-- [ ] Implementation
-- [ ] Verification (fresh-clone walkthrough)
+- [x] Implementation — quick-start updated to use `cp .env.example .env`, `docker compose exec` for schema apply, `uv venv` + `uv pip install` for deps, `uv run python src/etl/etl.py` for the load; first-run timing footnote added
+- [x] Verification — Mermaid ER diagram matches `src/etl/schema.sql` 1:1; architecture diagram includes Postgres + mcp-postgres + both demos
 
 ---
 
@@ -228,5 +228,5 @@ docs/ROADMAP.md item for this feature is marked ✅.
 **Files:** `CHANGELOG.md`, `docs/ROADMAP.md`
 **Dependencies:** All previous tasks complete
 
-- [ ] CHANGELOG entry written
-- [ ] Roadmap item marked done
+- [x] CHANGELOG entry written — `[Unreleased]` block lists schema, ETL, env scaffolding, with row counts and timing note
+- [x] Roadmap item marked done — `v0.0.1` and `v0.1.0` rows now show ✅ in `docs/ROADMAP.md`
