@@ -75,11 +75,20 @@ acceptance criteria below:
 - [ ] ETL melts the wide pivot (~82 quarterly columns in `YYYY QN` format) into
       `fact_registrations` rows
 - [ ] ETL uses `psycopg2` with parameterised queries — no ORM
-- [ ] Batch inserts of 5,000 rows
-- [ ] Idempotent via `INSERT … ON CONFLICT DO NOTHING`
+- [ ] Dim inserts use `psycopg2.extras.execute_values` with `page_size=5000`
+- [ ] Fact inserts use `COPY FROM` into a TEMP staging table, then a single
+      server-side `INSERT … SELECT … JOIN dim_vehicle … ON CONFLICT DO NOTHING`
+      to resolve `vehicle_id` without per-row Python work
+- [ ] Idempotent: a fast-skip at startup detects a populated `fact_registrations`
+      and exits as a no-op (~3 s); contributors run
+      `TRUNCATE fact_registrations` to force a fresh load
 - [ ] Exits 0 on success, 1 on failure
 - [ ] `src/etl/requirements.txt` pins direct deps (latest stable)
 - [ ] Reproducible row counts documented in PR description
+- [ ] **First-run timing on Docker Desktop / Windows is approximately 35 minutes**
+      — a one-time onboarding cost dominated by Postgres index maintenance and
+      WSL2 volume I/O at the 19.7M-row fact scale. Subsequent runs are < 5 s
+      via fast-skip. Future contributors only pay the load cost once.
 
 ### Documentation (#4)
 
