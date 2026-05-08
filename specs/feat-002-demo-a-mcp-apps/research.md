@@ -47,9 +47,11 @@ tool, canonical SDK, HTTP transport.
 
 - **Source:** [npmjs.com/package/pg](https://www.npmjs.com/package/pg)
 - **Status:** stable, mature; ~14k npm dependents.
-- **Decision:** pin `pg` to `^8.20.0`. Use `Pool` for connection management;
-  explicit `BEGIN` / `SET TRANSACTION READ ONLY` / `COMMIT` for the
-  read-only enforcement (decision #1 in spec).
+- **Decision:** pin `pg` to `^8.20.0`. Use `Pool` for connection management.
+  Read-only enforcement is via a dedicated `vehicles_readonly` Postgres role
+  (`GRANT SELECT` only) connected via `DATABASE_URL_READONLY` env var (decision
+  #1 in spec). DB-layer permission rejects any write attempt regardless of SQL
+  syntax — stronger than per-query transaction modes.
 - **Constitution check:** Article III v1.1.0 explicitly approves `pg` for
   Demo A. No ORM. Parameterised queries throughout.
 
@@ -142,7 +144,7 @@ import { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE }
 registerAppTool(server, "query_vehicles", {
   description: "...",
   inputSchema: { type: "object", properties: { sql: { type: "string" } }, required: ["sql"] },
-  _meta: { ui: { resourceUri: "ui://vehicle/chart-renderer" } },
+  _meta: { ui: { resourceUri: "ui://vehicle/chart-renderer/mcp-app.html" } },
 }, async ({ sql }) => {
   const rows = await runReadOnly(sql);
   return {
@@ -152,7 +154,7 @@ registerAppTool(server, "query_vehicles", {
   };
 });
 
-registerAppResource(server, "ui://vehicle/chart-renderer",
+registerAppResource(server, "ui://vehicle/chart-renderer/mcp-app.html",
   "Vehicle chart renderer",
   { mimeType: RESOURCE_MIME_TYPE },
   async () => ({ contents: [{ uri: "...", mimeType: RESOURCE_MIME_TYPE, text: bundledHtml }] })

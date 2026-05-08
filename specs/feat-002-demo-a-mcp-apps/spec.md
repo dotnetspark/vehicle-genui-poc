@@ -25,7 +25,7 @@ This feature delivers, per the official MCP Apps quickstart pattern:
 
 1. A TypeScript MCP server using `@modelcontextprotocol/sdk` and
    `@modelcontextprotocol/ext-apps` that owns one tool (`query_vehicles`)
-   and one UI resource (`ui://vehicle/chart-renderer`).
+   and one UI resource (`ui://vehicle/chart-renderer/mcp-app.html`).
 2. A bundled HTML chart-renderer that picks the chart type from the result's
    column shape and degrades gracefully to a table when no chart fits.
 3. Claude Desktop config and a system prompt that wire it together.
@@ -49,9 +49,12 @@ This feature delivers, per the official MCP Apps quickstart pattern:
 
 (Five tactical choices encoded directly. Push back below if any need flipping.)
 
-1. **Read-only SQL via per-query `SET TRANSACTION READ ONLY`.** Hardens
-   against accidental writes from a hallucinated SQL without requiring a
-   separate read-only Postgres role.
+1. **Read-only SQL via a dedicated `vehicles_readonly` Postgres role**
+   (`GRANT SELECT` only on `public`). The Demo A server connects with
+   `DATABASE_URL_READONLY` (separate from the ETL's `DATABASE_URL`).
+   Even a hallucinated `BEGIN; UPDATE …; COMMIT;` is rejected by the DB
+   with `ERROR: permission denied`, which surfaces back to the LLM as
+   `isError: true` so it can self-correct.
 2. **Dev workflow is `npm run build && npm run serve`.** No Docker for the
    demo server itself; it's vanilla Node + Express. Postgres still runs in
    Docker via `docker compose` from Feature 001.
@@ -74,12 +77,14 @@ This feature delivers, per the official MCP Apps quickstart pattern:
       Streamable HTTP at `http://localhost:3001/mcp` using
       `@modelcontextprotocol/sdk` + `@modelcontextprotocol/ext-apps`.
 - [ ] Single tool `query_vehicles(sql: string)`:
-  - Connects to Postgres via `pg` using `DATABASE_URL`
-  - Executes the SQL inside a `READ ONLY` transaction
+  - Connects to Postgres via `pg` using `DATABASE_URL_READONLY` (the dedicated
+    `vehicles_readonly` role) so DB-level permissions enforce read-only access
+    regardless of the SQL the LLM writes
+  - Executes the SQL via the pool
   - Returns rows as `structuredContent`
   - Returns a brief text summary in `content`
-  - Carries `_meta.ui.resourceUri = "ui://vehicle/chart-renderer"`
-- [ ] Single UI resource `ui://vehicle/chart-renderer` served via
+  - Carries `_meta.ui.resourceUri = "ui://vehicle/chart-renderer/mcp-app.html"`
+- [ ] Single UI resource `ui://vehicle/chart-renderer/mcp-app.html` served via
       `registerAppResource` with `mimeType = RESOURCE_MIME_TYPE`
       (`text/html+mcp`).
 - [ ] Errors return `{ isError: true, content: [text with Postgres error] }`

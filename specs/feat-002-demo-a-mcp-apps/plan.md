@@ -4,7 +4,7 @@
 
 Build the canonical MCP Apps server for Demo A under [constitution v1.1.0](../../.specify/constitution.md).
 A single TypeScript MCP server exposes one tool (`query_vehicles`) and one
-UI resource (`ui://vehicle/chart-renderer`). Claude Desktop reaches the
+UI resource (`ui://vehicle/chart-renderer/mcp-app.html`). Claude Desktop reaches the
 server via the `mcp-remote` shim. The iframe's bundled chart-renderer picks
 the chart type from the result's column shape and degrades to a table when
 no chart fits. All data comes from the schema shipped in Feature 001 — this
@@ -18,7 +18,7 @@ feature adds no DB structure.
 | Transport | Streamable HTTP (`localhost:3001/mcp`) | stdio | Canonical for MCP Apps; matches official quickstart |
 | Claude Desktop bridging | `npx mcp-remote http://localhost:3001/mcp` shim | direct stdio server / cloudflared tunnel | Free Claude plan works; no public URL needed |
 | Postgres client | `pg` (node-postgres) | `postgres` (porsager) | Official quickstart's choice; Article III names `pg`; mature with 14k dependents |
-| Read-only enforcement | per-query `SET TRANSACTION READ ONLY` | dedicated read-only role | Spec decision #1 — minimal config; hardens vs hallucinated writes |
+| Read-only enforcement | dedicated `vehicles_readonly` role with `GRANT SELECT` only, connected via `DATABASE_URL_READONLY` | per-query `SET TRANSACTION READ ONLY` | Stronger guarantee — DB-layer permission rejects writes regardless of SQL Claude writes |
 | UI bundling | `vite-plugin-singlefile` (single HTML, all JS/CSS inline) | separate files + CDN | CSP-friendly under any host; no external `script-src` needed |
 | Chart picker location | iframe-side, on `App.ontoolresult` | server-side per-result `_meta` injection | Per-tool `_meta.ui.resourceUri` is canonical; iframe owns chart logic |
 | Chart-renderer strategy | One renderer, picks chart by column shape; table fallback | three separate `ui://` resources | One UI resource matches canonical per-tool metadata pattern |
@@ -53,6 +53,7 @@ src/demo-a-mcp-apps/
   tsconfig.json                   (new)
   vite.config.ts                  (new — singlefile plugin)
   server.ts                       (new — MCP server + tool + resource)
+  setup-readonly-role.sql         (new — creates vehicles_readonly DB role, idempotent)
   mcp-app.html                    (new — UI entry point, root mount node)
   src/
     mcp-app.ts                    (new — App class init, ontoolresult, calls renderer)
@@ -64,6 +65,7 @@ src/demo-a-mcp-apps/
 README.md                         (updated — Demo A quick-start step)
 CHANGELOG.md                      (updated — [Unreleased] entry)
 docs/ROADMAP.md                   (updated — v0.2.0 marked ✅)
+.env.example                      (updated — adds DATABASE_URL_READONLY)
 ```
 
 No source files outside `src/`. Compose / `.env.example` already at root from
@@ -107,45 +109,66 @@ Order is dependency-driven; each task gates the next.
 
 6. `server.ts` skeleton — imports, `McpServer({...})`, `StreamableHTTPServerTransport`,
    Express app, POST `/mcp` route per the [official quickstart](https://modelcontextprotocol.io/extensions/apps/build).
-7. Postgres `Pool` initialised from `DATABASE_URL` (loaded via Node's built-in env).
-8. `runReadOnlySql(sql: string)` helper — `BEGIN; SET TRANSACTION READ ONLY; <sql>; COMMIT;`
-   on a single connection from the pool. On error: `ROLLBACK`, return rows + Postgres
-   error string for the response builder.
-9. `registerAppTool(server, "query_vehicles", { description, inputSchema, _meta }, handler)` —
-   handler calls `runReadOnlySql`, returns `{ content, structuredContent, _meta, isError }`.
-10. `registerAppResource(server, "ui://vehicle/chart-renderer", "Vehicle chart renderer",
+7. **DB role setup** — author `src/demo-a-mcp-apps/setup-readonly-role.sql`:
+   ```sql
+   DO $$ BEGIN
+       IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'vehicles_readonly') THEN
+           CREATE ROLE vehicles_readonly LOGIN PASSWORD 'readonly';
+       END IF;
+   END $$;
+   GRANT CONNECT ON DATABASE vehicles TO vehicles_readonly;
+   GRANT USAGE ON SCHEMA public TO vehicles_readonly;
+   GRANT SELECT ON ALL TABLES IN SCHEMA public TO vehicles_readonly;
+   ALTER DEFAULT PRIVILEGES IN SCHEMA public
+       GRANT SELECT ON TABLES TO vehicles_readonly;
+   ```
+   Idempotent. Apply once via
+   `docker compose exec -T db psql -U postgres -d vehicles < src/demo-a-mcp-apps/setup-readonly-role.sql`.
+8. **Update `.env.example`** at repo root — add
+   `DATABASE_URL_READONLY=postgresql://vehicles_readonly:readonly@localhost:5432/vehicles`.
+   The ETL's existing `DATABASE_URL` (postgres superuser) is unchanged.
+9. Postgres `Pool` in `server.ts` initialised from `DATABASE_URL_READONLY`. The DB
+   layer enforces read-only — any `INSERT` / `UPDATE` / `DELETE` / `CREATE` / `DROP`
+   from a hallucinated SQL is rejected with `ERROR: permission denied`. Handler
+   surfaces that as `{ isError: true, content: [Postgres error message] }`, letting
+   the LLM self-correct without crashing.
+10. `registerAppTool(server, "query_vehicles", { description, inputSchema, _meta }, handler)` —
+    handler runs `await pool.query(sql)`, returns `{ content, structuredContent, _meta, isError }`.
+11. `registerAppResource(server, "ui://vehicle/chart-renderer/mcp-app.html", "Vehicle chart renderer",
    { mimeType: RESOURCE_MIME_TYPE }, async () => fs.readFile("dist/mcp-app.html"))`.
-11. `app.listen(3001)`.
-12. **Verification:** start the server (`npm run serve`); from another shell:
+12. `app.listen(3001)`.
+13. **Verification:** start the server (`npm run serve`); from another shell:
     `curl -X POST http://localhost:3001/mcp -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'` — confirms `query_vehicles` is listed.
-    Then call `tools/call` with a simple SQL — confirms rows come back.
+    Then call `tools/call` with a simple SQL — confirms rows come back. Try a
+    write (e.g. `CREATE TABLE foo(...)`) — confirms `permission denied` from
+    the `vehicles_readonly` role.
 
 ### Phase 3 — UI
 
-13. `mcp-app.html` — minimal HTML with `<div id="root"></div>` and a `<script type="module" src="/src/mcp-app.ts">`.
-14. `src/mcp-app.ts` — instantiate `new App({...})`, `app.connect()`, set `app.ontoolresult`
+14. `mcp-app.html` — minimal HTML with `<div id="root"></div>` and a `<script type="module" src="/src/mcp-app.ts">`.
+15. `src/mcp-app.ts` — instantiate `new App({...})`, `app.connect()`, set `app.ontoolresult`
     to call `renderFromRows(result.structuredContent)`.
-15. `src/chart-renderer.ts`:
+16. `src/chart-renderer.ts`:
     - `pickChartType(rows): "line" | "bar" | "donut" | "table"` — implements the spec's
       precedence ladder + row-count caps.
     - `renderFromRows(rows)` — picks type, mounts the right Chart.js chart on `#root`,
       or renders an HTML table if `pickChartType` returns `"table"`.
     - Fuel colour map per spec.
-16. **Verification:** `npm run build` produces a single `dist/mcp-app.html` containing
+17. **Verification:** `npm run build` produces a single `dist/mcp-app.html` containing
     all JS and CSS inline (verify file size is non-trivial; grep for `chart.js` symbols
     inside the bundle).
 
 ### Phase 4 — Server reads built HTML
 
-17. `registerAppResource` handler reads from `dist/mcp-app.html` via
+18. `registerAppResource` handler reads from `dist/mcp-app.html` via
     `fs.readFile(path.join(import.meta.dirname, "dist", "mcp-app.html"))`.
-18. **Verification:** `curl POST .../mcp` for `resources/read uri=ui://vehicle/chart-renderer`
+19. **Verification:** `curl POST .../mcp` for `resources/read uri=ui://vehicle/chart-renderer/mcp-app.html`
     — returns the bundled HTML body with `Content-Type: text/html+mcp` (or whatever the
     SDK encodes).
 
 ### Phase 5 — Claude Desktop wiring
 
-19. `claude-desktop-config.json` (snippet):
+20. `claude-desktop-config.json` (snippet):
     ```json
     {
       "mcpServers": {
@@ -156,23 +179,25 @@ Order is dependency-driven; each task gates the next.
       }
     }
     ```
-20. `system-prompt.md` — see acceptance criteria #8 in spec.md for required content.
-21. **Demo A README** (`src/demo-a-mcp-apps/README.md`) — local run instructions
-    (build, serve, paste config, restart Claude Desktop).
-22. Root README quick-start updated to point at the Demo A README.
+21. `system-prompt.md` — see acceptance criteria #8 in spec.md for required content.
+22. **Demo A README** (`src/demo-a-mcp-apps/README.md`) — local run instructions
+    (build, serve, paste config, restart Claude Desktop). Includes the
+    one-time `setup-readonly-role.sql` apply step.
+23. Root README quick-start updated to point at the Demo A README.
 
 ### Phase 6 — End-to-end test (#9, manual)
 
-23. With Postgres + ETL loaded (Feature 001 already done), `npm run serve` running,
-    Claude Desktop config merged and Claude Desktop restarted, run all five
-    golden-path questions and verify each renders a chart (or graceful table).
-24. Capture screenshots / row counts for the eventual PR description.
+24. With Postgres + ETL loaded (Feature 001 already done), the readonly role
+    applied, `npm run serve` running, Claude Desktop config merged and Claude
+    Desktop restarted, run all five golden-path questions and verify each
+    renders a chart (or graceful table).
+25. Capture screenshots / row counts for the eventual PR description.
 
 ### Phase 7 — Release plumbing
 
-25. `CHANGELOG.md` `[Unreleased]` entry describing Demo A.
-26. `docs/ROADMAP.md` `v0.2.0` row marked ✅.
-27. Open PR, squash-merge, tag `v0.2.0`.
+26. `CHANGELOG.md` `[Unreleased]` entry describing Demo A.
+27. `docs/ROADMAP.md` `v0.2.0` row marked ✅.
+28. Open PR, squash-merge, tag `v0.2.0`.
 
 ## Testing Approach
 
@@ -185,7 +210,7 @@ Per-task acceptance is in `tasks.md`. High-level:
   envelope per the SDK's pattern → confirms the renderer.
 - **End-to-end:** Phase 6's five golden-path queries.
 - **Idempotency / re-runs:** server restarts fast; no DB state changes between
-  runs (queries are read-only).
+  runs (the `vehicles_readonly` role enforces this at the DB layer).
 
 No unit tests. The codebase is ~300 lines split across 4 TS files plus glue.
 Article VII (Simplicity).
@@ -198,7 +223,7 @@ flowchart TD
     CD[Claude Desktop<br/>LLM]
     Shim[npx mcp-remote<br/>stdio ↔ HTTP bridge]
     Server[server.ts<br/>localhost:3001/mcp<br/>Streamable HTTP]
-    Pool[pg.Pool<br/>READ ONLY tx]
+    Pool[pg.Pool<br/>vehicles_readonly role]
     DB[(Postgres 16<br/>vehicles)]
     Bundle[dist/mcp-app.html<br/>bundled UI + Chart.js]
     Iframe[Sandboxed iframe<br/>App class<br/>chart-renderer.ts]
@@ -210,7 +235,7 @@ flowchart TD
     Server --> Pool --> DB
     Server -->|content + structuredContent<br/>+ _meta.ui.resourceUri| Shim
     Shim --> CD
-    CD -->|resources/read ui://vehicle/chart-renderer| Server
+    CD -->|resources/read ui://vehicle/chart-renderer/mcp-app.html| Server
     Server -->|HTML body| CD
     CD -->|render in sandboxed iframe| Bundle
     Bundle --> Iframe
