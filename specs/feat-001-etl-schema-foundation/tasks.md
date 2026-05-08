@@ -75,8 +75,13 @@ Milestone: `v0.1.0`
 ### Task 2.2 — Apply schema and verify comments came through
 
 **Acceptance:**
-- `psql "$DATABASE_URL" -f src/etl/schema.sql` runs cleanly with no errors.
-- `\dt+` shows all three tables and the view.
+- Schema applies cleanly (no errors). On Windows without a native `psql`, run:
+  `docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < src/etl/schema.sql`
+  (PowerShell: `Get-Content src/etl/schema.sql | docker compose exec -T db psql -U $env:POSTGRES_USER -d $env:POSTGRES_DB`).
+  Alternatively, use the local pgAdmin 4 install: connect to `localhost:5432`
+  and run the file via Query Tool.
+- `docker compose exec db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\dt+'`
+  shows all three tables and the view.
 - `\d+ dim_vehicle`, `\d+ dim_period`, `\d+ fact_registrations` show every
   column comment.
 - Re-running the file is idempotent or fails harmlessly (use `CREATE … IF NOT EXISTS`
@@ -87,6 +92,8 @@ Milestone: `v0.1.0`
 **Parallel:** No
 **Notes:**
 - Capture the `\d+` output in PR description for review.
+- A native `psql` install is not required; the container's `psql` is used via
+  `docker compose exec`.
 
 - [ ] Implementation (apply schema)
 - [ ] Verification (`\dt+`, `\d+` outputs match spec)
@@ -142,6 +149,10 @@ Milestone: `v0.1.0`
 - Must be idempotent — every insert path uses `ON CONFLICT DO NOTHING`.
 - Handle `NaN` cells from `pandas.melt` by skipping them (DVLA leaves cells
   empty for vehicles that didn't exist yet in early quarters).
+- `is_full_quarter` rule: a quarter column header is treated as partial
+  (`is_full_quarter = false`) if it contains a parenthetical suffix such as
+  `(P)` or `(provisional)`; all other quarters are full. If the actual CSV
+  uses a different convention, this is the only line in `etl.py` to adjust.
 
 - [ ] Implementation
 - [ ] Verification (script imports clean; no run yet)
