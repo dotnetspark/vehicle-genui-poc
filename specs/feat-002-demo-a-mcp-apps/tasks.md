@@ -90,8 +90,8 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
 - Default password `readonly` is fine for a local PoC; documented in the
   Demo A README.
 
-- [ ] Implementation
-- [ ] Verification (apply, then test SELECT vs CREATE as the readonly role)
+- [x] Implementation — applied via docker exec; idempotent on second run
+- [x] Verification — SELECT dim_vehicle returned FORD 10740 / VAUXHALL 8173 / MERCEDES 7904; CREATE TABLE rejected "permission denied for schema public"
 
 ### Task 2.2 — Server scaffolding [P]
 
@@ -113,8 +113,8 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
 - Mirror the quickstart's `server.ts` shape.
 - The Pool, tool, and resource come in Tasks 2.3 / 2.4.
 
-- [ ] Implementation
-- [ ] Verification (`npm run serve`; `curl http://localhost:3001/mcp` returns a JSON-RPC envelope or 4xx for empty body — confirms the route is mounted)
+- [x] Implementation — server.ts scaffolded per quickstart pattern (already merged in repo)
+- [x] Verification — Boot log "Demo A MCP server listening on http://localhost:3001/mcp" confirmed; POST /mcp with empty body returned 406 JSON-RPC error (route mounted)
 
 ### Task 2.3 — Tool: `query_vehicles`
 
@@ -143,7 +143,7 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
 - Catching only `pg` errors keeps unexpected errors visible (they crash the
   request, which is what we want during development).
 
-- [ ] Implementation
+- [x] Implementation — Pool wired to DATABASE_URL_READONLY; `query_vehicles` registered via `registerAppTool` with Zod inputSchema `{ sql }`, `_meta.ui.resourceUri`, returns `{ content, structuredContent: { rows }, isError }`, catches only `DatabaseError`
 - [ ] Verification (`tools/list` shows `query_vehicles`; `tools/call` with `SELECT 1::int AS one;` returns rows; with a `CREATE TABLE …` returns `isError: true` and the permission-denied message)
 
 ### Task 2.4 — Resource: `ui://vehicle/chart-renderer/mcp-app.html`
@@ -165,7 +165,7 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
   Task 1.1. Phase 3 will produce the real bundled UI; the resource handler
   doesn't change between then.
 
-- [ ] Implementation
+- [x] Implementation — `registerAppResource` wired with `(server, name, uri, { mimeType }, handler)`; handler reads `dist/mcp-app.html` at request time via `import.meta.dirname`; missing file returns `{ contents: [], isError: true }`
 - [ ] Verification (`resources/read uri=ui://vehicle/chart-renderer/mcp-app.html` returns the placeholder HTML body)
 
 ### Task 2.5 — Phase 2 smoke test
@@ -184,8 +184,13 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
 **Dependencies:** 2.3, 2.4
 **Parallel:** No
 
-- [ ] Implementation (run the curl checks above)
-- [ ] Verification (capture output for the eventual PR description)
+- [x] Implementation — `npm run serve` started cleanly; MCP server listening on http://localhost:3001/mcp
+- [x] Verification:
+  - **tools/list**: query_vehicles present; `_meta.ui.resourceUri` = "ui://vehicle/chart-renderer/mcp-app.html" ✓
+  - **tools/call (SELECT)**: isError=false; structuredContent.rows=[{make:"FORD",count:10740}, {make:"VAUXHALL",count:8173}, {make:"MERCEDES",count:7904}, {make:"RENAULT",count:7311}, {make:"VOLKSWAGEN",count:7156}] ✓
+  - **tools/call (CREATE TABLE)**: isError=true; content="permission denied for schema public" ✓
+  - **resources/list**: ui://vehicle/chart-renderer/mcp-app.html present; mimeType="text/html;profile=mcp-app" ✓
+  - **resources/read**: Returns placeholder HTML body with DOCTYPE, title, and root div (Phase 3 will replace with bundled UI) ✓
 
 ---
 

@@ -22,6 +22,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Feature 002 — Demo A MCP Apps server (Phase 2)**:
+  - `src/demo-a-mcp-apps/setup-readonly-role.sql` — idempotent DDL creating
+    the `vehicles_readonly` Postgres role with `SELECT`-only on `public`.
+    Verified: `SELECT` succeeds, `CREATE TABLE` is rejected with
+    `permission denied for schema public`.
+  - `src/demo-a-mcp-apps/server.ts` — Express 5 + MCP `StreamableHTTPServerTransport`
+    on `POST /mcp` (port 3001). Registers a generic `query_vehicles` tool
+    via `registerAppTool` (Zod `{ sql: string }` input, returns rows under
+    `structuredContent.rows`, `_meta.ui.resourceUri` linked to the bundled
+    UI). Registers the `ui://vehicle/chart-renderer/mcp-app.html` resource
+    via `registerAppResource` — handler reads `dist/mcp-app.html` at request
+    time and returns `isError: true` if the bundle has not been built yet.
+  - End-to-end smoke test verified: `tools/list` advertises `query_vehicles`
+    with the `_meta.ui` linkage; a `SELECT` over `fact_registrations` returns
+    the top makes (FORD, VAUXHALL, MERCEDES, RENAULT, VOLKSWAGEN);
+    a `CREATE TABLE` is rejected with `isError: true`; `resources/read`
+    returns the placeholder bundle (real UI lands in Phase 3).
+
 - **Feature 001 — ETL + Postgres schema foundation** (#1, #2, #3, #4):
   - `docker-compose.yml` runs Postgres 16 (Alpine) on `localhost:5432` with
     a named `pgdata` volume and a `pg_isready` healthcheck. pgAdmin

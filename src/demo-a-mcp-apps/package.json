@@ -6,8 +6,8 @@
   "description": "Demo A — MCP Apps surface for vehicle-genui-poc",
   "scripts": {
     "build": "cross-env INPUT=mcp-app.html vite build",
-    "serve": "tsx server.ts",
-    "start": "tsx server.ts"
+    "serve": "tsx --env-file=../../.env server.ts",
+    "start": "tsx --env-file=../../.env server.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -15,7 +15,8 @@
     "pg": "^8.20.0",
     "chart.js": "^4.5.1",
     "express": "^5.0.0",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "zod": "latest"
   },
   "devDependencies": {
     "typescript": "^5.8.0",
