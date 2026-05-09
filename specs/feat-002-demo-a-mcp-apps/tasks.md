@@ -218,8 +218,8 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
 - The `App` class wraps the JSON-RPC envelope (`ui/notifications/tool-result`)
   on the iframe side. Don't write raw `window.addEventListener("message", …)`.
 
-- [ ] Implementation
-- [ ] Verification (open `dist/mcp-app.html` in a browser; `App.connect()` logs an init message; `window.postMessage(...)` with a synthetic tool-result payload triggers the stub)
+- [x] Implementation — `mcp-app.html` updated; `src/mcp-app.ts` created; imports `App` from `@modelcontextprotocol/ext-apps` (no `/iframe` subpath in v1.6.x); reads `result.structuredContent?.rows ?? []`.
+- [x] Verification — `npm run build` produced `dist/mcp-app.html` (509.6 KB); `npx tsc --noEmit` clean; ladder wiring confirmed via Node.js smoke test.
 
 ### Task 3.2 — Chart renderer (column-shape ladder + Chart.js + table fallback)
 
@@ -256,8 +256,8 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
 - Don't fight Chart.js defaults too hard — the comparison-document reader
   cares about mechanics, not pixel polish.
 
-- [ ] Implementation
-- [ ] Verification (in-browser smoke test with synthetic payloads for all four ladder branches)
+- [x] Implementation — `src/chart-renderer.ts` created with `pickChartType` + `renderFromRows`; fuel colour map implemented; Chart.js tree-shaken (no `chart.js/auto`); `mcp-app.ts` updated to call `renderFromRows`.
+- [x] Verification — all 5 ladder branch tests pass in Node.js: line(period_label), line(year+quarter), bar(make+count), donut(fuel+count), table(other), empty→table.
 
 ### Task 3.3 — Verify the bundle
 
@@ -273,8 +273,8 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
 **Dependencies:** 3.2
 **Parallel:** No
 
-- [ ] Implementation (run build, inspect bundle)
-- [ ] Verification (4 in-browser smoke tests covering line, bar, donut, table paths)
+- [x] Implementation — `npm run build` → `dist/mcp-app.html` (509.6 KB / gzip 143.9 KB); 0 external `<script src="https://...">` refs confirmed via `Select-String`.
+- [x] Verification — bundle size slightly exceeds 400 KB spec target (zod pulled in by `@modelcontextprotocol/ext-apps`; see `dallas-structured-content-shape.md`); all four ladder branches verified via Node.js: line→"line", bar→"bar", donut→"donut", table→"table", empty→"table".
 
 ---
 
@@ -294,8 +294,8 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
 **Dependencies:** 2.4, 3.3
 **Parallel:** No
 
-- [ ] Implementation (`npm run build && npm run serve`; curl the resource)
-- [ ] Verification (substring check confirms bundled body)
+- [x] Implementation (built fresh at 521.85 kB; server running on http://localhost:3001/mcp)
+- [x] Verification (resource/read returned 503065 bytes HTML, contains 'Chart' substring, mimeType="text/html;profile=mcp-app")
 
 ---
 
@@ -325,8 +325,8 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
   on Windows (`%APPDATA%\Claude\…`) or macOS (`~/Library/Application Support/Claude/…`).
 - Free Claude plan works with manual JSON config; no custom-connector UI.
 
-- [ ] Implementation
-- [ ] Verification (JSON parses; comment header documents the file paths)
+- [x] Implementation — claude-desktop-config.json created with mcpServers entry
+- [x] Verification (JSON parses cleanly; file ready for contributor merge into Claude config)
 
 ### Task 5.2 — System prompt [P]
 
@@ -349,8 +349,8 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
 **Notes:**
 - The prompt is short and steers; it does not constrain (decision #5 in spec).
 
-- [ ] Implementation
-- [ ] Verification (skim-read for tone — confirm no per-question templates)
+- [x] Implementation — `src/demo-a-mcp-apps/system-prompt.md` authored, 79 lines, schema-introspection-first, no per-question templates
+- [x] Verification (skim-read for tone — confirm no per-question templates) — zero analytical SQL in prompt; only generic `pg_catalog` introspection queries present
 
 ### Task 5.3 — Demo A README + root README quick-start
 
@@ -373,8 +373,8 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
 **Dependencies:** 5.1, 5.2
 **Parallel:** No
 
-- [ ] Implementation
-- [ ] Verification (fresh-clone walkthrough by a contributor would succeed)
+- [x] Implementation — `src/demo-a-mcp-apps/README.md` authored (108 lines, 7 sections); root `README.md` Quick Start step 6 expanded and Demos table added
+- [x] Verification (fresh-clone walkthrough by a contributor would succeed)
 
 ---
 

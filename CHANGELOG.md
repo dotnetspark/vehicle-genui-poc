@@ -22,6 +22,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Feature 002 — Demo A MCP Apps client wiring (Phases 3–5)**:
+  - `src/demo-a-mcp-apps/mcp-app.html` + `src/mcp-app.ts` — bundled iframe
+    entry that wires the `@modelcontextprotocol/ext-apps` `App` to the chart
+    renderer and routes tool results into the DOM.
+  - `src/demo-a-mcp-apps/src/chart-renderer.ts` — pure `pickChartType` ladder
+    (line / bar / donut / table) plus a Chart.js 4 renderer with the
+    fuel-colour palette (electric green, hybrid blue, petrol/diesel grey,
+    gas amber, other light grey) and an HTML-table fallback (including a
+    "No data" message for empty result sets).
+  - `vite-plugin-singlefile` build emits a single `dist/mcp-app.html`
+    (~510 KB; over the original ~400 KB target due to `zod` pulled in by
+    `ext-apps` — documented in `.squad/decisions.md`).
+  - End-to-end `resources/read` confirmed: Phase 2's resource handler now
+    serves the bundled HTML body (`mimeType: text/html;profile=mcp-app`,
+    Chart.js detected in payload).
+  - `src/demo-a-mcp-apps/claude-desktop-config.json` — `mcpServers` snippet
+    (`npx mcp-remote http://localhost:3001/mcp`) for contributors to merge
+    into their own `claude_desktop_config.json`.
+  - `src/demo-a-mcp-apps/system-prompt.md` — schema-first system prompt
+    paste-target for Claude Desktop → Settings → Profile → Custom
+    instructions; covers `pg_catalog` schema introspection, the
+    `query_vehicles({ sql })` contract, the renderer column ladder, and an
+    explicit no-fabrication rule. No per-question SQL templates
+    (Article III v1.1.0).
+  - `src/demo-a-mcp-apps/README.md` + root `README.md` Quick Start update —
+    one-time readonly-role setup, build/serve, Claude Desktop wiring, the
+    five golden-path questions, and a short troubleshooting section.
+
 - **Feature 002 — Demo A MCP Apps server (Phase 2)**:
   - `src/demo-a-mcp-apps/setup-readonly-role.sql` — idempotent DDL creating
     the `vehicles_readonly` Postgres role with `SELECT`-only on `public`.
