@@ -12,6 +12,26 @@ Decision: `query_vehicles` is a pure SQL pass-through with `inputSchema: { sql: 
 
 References: Constitution Article III v1.1.0; `src/demo-a-mcp-apps/server.ts`; `specs/feat-002-demo-a-mcp-apps/tasks.md` Task 2.3.
 
+## Phase 3-5 — Demo A UI + wiring
+
+### 2026-05-08 — MCP End-to-End Smoke Test Protocol
+
+**Author:** Ash
+
+Verifying MCP server implementations requires: client connection, StreamableHTTP transport (Accept/Content-Type headers, session-id management), tool calls with arguments, error handling, resource endpoints. Decision: **use MCP SDK `Client` + `StreamableHTTPClientTransport` for all e2e smoke tests**, not raw HTTP. SDK handles JSON-RPC handshake, session-ids, streaming transparently; single `.mjs` file (Node.js ESM) can be created, run, deleted without build overhead. Type safety and reusability across demos. Implementation: create `smoke-test.mjs` in server root; import SDK client; instantiate; connect via transport; run assertions. Task 4.1 (2026-05-08) validated protocol: server bootstrap, query_vehicles tool metadata (resourceUri set), structured response rows, permission denial on mutation, resource read. **Adoption: use this pattern for all MCP server e2e tests in Phase 2–5.**
+
+### 2026-05-08 — Structured Content Shape and Import Path Corrections
+
+**Author:** Dallas
+
+Three corrections to Phase 3 (Tasks 3.1–3.3):
+
+1. **`structuredContent` envelope shape:** tasks.md draft said `result.structuredContent ?? []` (bare array). Reality: `server.ts` emits `{ rows: result.rows }` (object with `rows` key). Correct client pattern: `result.structuredContent?.rows ?? []`. `server.ts` is correct and unchanged; only client access pattern needed updating.
+
+2. **Import path for `App`:** tasks.md said `import { App } from "@modelcontextprotocol/ext-apps/iframe"`. Reality: v1.6.x exports map has no `/iframe` subpath. **Correct import:** `import { App } from "@modelcontextprotocol/ext-apps"`.
+
+3. **Bundle size:** Spec target 150–400 KB; actual 509.6 KB (gzip: 143.9 KB). Overshoot caused by zod v4 transitive dependency. Gzip is within practical limits; no action needed.
+
 ## Active Decisions
 
 No new active decisions.
