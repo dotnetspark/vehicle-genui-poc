@@ -230,8 +230,9 @@ use consistent spacing. Desktop-only (no mobile breakpoints needed).
 
 ### Task 6.1 — Shared system prompt loader
 **Acceptance:** `frontend/src/prompt/system-prompt.ts` imports
-`../../../demo-a-mcp-apps/system-prompt.md?raw` (Vite raw import)
-and exports the string as `SYSTEM_PROMPT`. A short header explains
+`../../../shared/system-prompt.md?raw` (Vite raw import — file lives
+in `src/shared/` per Constitution Article II) and exports the string
+as `SYSTEM_PROMPT`. A short header explains
 that the three frontend tools (`show_fuel_breakdown`, `show_trend`,
 `show_top_makes`) are how the LLM renders results in this demo;
 the rest is byte-identical to Demo A.

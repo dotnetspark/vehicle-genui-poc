@@ -82,7 +82,7 @@ src/demo-b-copilotkit/
         └── verify-role.ts           # Startup check: read_only + timeout
 ```
 
-System-prompt content is shared with Demo A — `frontend/src/prompt/system-prompt.ts` reads/inlines `src/demo-a-mcp-apps/system-prompt.md` at build time (Vite `?raw` import) so both demos use byte-identical schema-introspection guidance.
+System-prompt content is shared with Demo A — `frontend/src/prompt/system-prompt.ts` reads/inlines `src/shared/system-prompt.md` at build time (Vite `?raw` import) so both demos use byte-identical schema-introspection guidance.
 
 ## Dependencies to Add
 
@@ -208,7 +208,8 @@ sequenceDiagram
 - [x] No custom NL→SQL helpers; one generic `query_vehicles({ sql })`
       tool only
 - [x] Demo isolation maintained — Demo B shares only the database
-      (and a build-time read of Demo A's `system-prompt.md`)
+      and `src/shared/system-prompt.md` (build-time read; per
+      Constitution Article II)
 - [x] Latest dependency versions (see `research.md`)
 - [x] CHANGELOG entry planned in step 10
 - [x] Mermaid diagrams used (no ASCII)
