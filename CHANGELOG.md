@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Feature 002 — Phase 6 verification (v0.2.0 milestone gate)**:
+  - Five golden-path queries executed end-to-end in **Claude for Windows v1.6608**
+    (UWP / Microsoft Store build) via a `cloudflared` quick tunnel exposing the
+    local MCP server. All five charts rendered inline.
+  - `src/demo-a-mcp-apps/README.md` — new "Alternative — remote testing via
+    cloudflared (Claude.ai web / Connectors)" section documenting the tunnel
+    workflow plus the Claude Desktop remote-URL connector form (no
+    `mcp-remote` stdio shim).
+  - Repo `.gitignore` — added `.copilot/` (Copilot CLI session state).
+
 ### Changed
 
 - **Constitution v1.1.0** — Article III amended from "No Custom Query Tools"

@@ -27,10 +27,19 @@ flowchart LR
 - Table comments populated — they are the LLM's only schema documentation.
 - Spec prompt: [specs/prompt-02-feature-001-etl.md](../specs/prompt-02-feature-001-etl.md).
 
-## v0.2.0 — Feature 002: Demo A (MCP Apps)
+## v0.2.0 — Feature 002: Demo A (MCP Apps) ✅
 
-- FastMCP server wrapping `mcp-postgres`.
-- Embedded HTML chart resources via Chart.js 4+.
+- TypeScript MCP server (`@modelcontextprotocol/sdk` + `@modelcontextprotocol/ext-apps`)
+  on Express 5 / `StreamableHTTPServerTransport`, port 3001.
+- Read-only Postgres role (`vehicles_readonly`) enforced at the database boundary.
+- Single generic `query_vehicles({ sql })` tool — schema `COMMENT ON` is the only
+  prompt surface (Constitution Article III v1.1.0).
+- Bundled Chart.js 4 UI resource (`ui://vehicle/chart-renderer/mcp-app.html`)
+  via `vite-plugin-singlefile`; column-shape ladder picks line / bar / donut /
+  table renderer.
+- Five golden-path queries verified end-to-end in Claude for Windows v1.6608
+  (UWP build) over a `cloudflared` quick tunnel (the new Claude does not load
+  `claude_desktop_config.json` — Connectors-only).
 - Spec prompt: [specs/prompt-03-feature-002-demo-a.md](../specs/prompt-03-feature-002-demo-a.md).
 
 ## v0.3.0 — Feature 003: Demo B (CopilotKit)

@@ -386,11 +386,11 @@ Constitution: v1.1.0 (Article III: Schema-First, LLM-Writes-SQL)
 With the server running, Claude Desktop config merged, and Claude Desktop
 restarted, run each of the five queries from the system prompt and confirm:
 
-- [ ] "Fuel breakdown for Cars in 2024" → donut chart renders
-- [ ] "EV growth trend since 2015" → line chart renders
-- [ ] "Top 10 makes by licensed vehicles" → horizontal bar renders
-- [ ] "Licensed vs SORN for motorcycles over time" → line chart (multi-series) renders
-- [ ] "Which fuel type grew fastest in last 5 years?" → line OR donut renders
+- [x] "Fuel breakdown for Cars in 2024" → donut chart renders
+- [x] "EV growth trend since 2015" → line chart renders
+- [x] "Top 10 makes by licensed vehicles" → horizontal bar renders
+- [x] "Licensed vs SORN for motorcycles over time" → line chart (multi-series) renders
+- [x] "Which fuel type grew fastest in last 5 years?" → line OR donut renders
       (both correct; whichever shape Claude's SQL produces)
 
 Capture screenshots or row counts for each.
@@ -402,9 +402,13 @@ Capture screenshots or row counts for each.
 **Notes:**
 - Each query may need 1–3 attempts as Claude refines the SQL based on schema
   introspection; that's fine and is data for the comparison document.
+- Verified against the new Claude for Windows v1.6608 (UWP/Microsoft Store
+  build) via a `cloudflared` quick tunnel exposing the local server. The
+  legacy `claude_desktop_config.json` + `mcp-remote` shim path is not
+  supported by this Claude version; remote MCP via Connectors is.
 
-- [ ] Implementation (run all five queries)
-- [ ] Verification (chart visible for each; screenshots captured)
+- [x] Implementation (run all five queries)
+- [x] Verification (chart visible for each)
 
 ---
 
@@ -418,5 +422,5 @@ docs/ROADMAP.md item for this feature is marked ✅.
 **Files:** `CHANGELOG.md`, `docs/ROADMAP.md`
 **Dependencies:** All previous tasks complete
 
-- [ ] CHANGELOG entry written
-- [ ] Roadmap item marked done
+- [x] CHANGELOG entry written
+- [x] Roadmap item marked done

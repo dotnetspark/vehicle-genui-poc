@@ -109,6 +109,63 @@ relaunch it. The MCP server registration only takes effect after a full restart.
 
 ---
 
+## Alternative — remote testing via cloudflared (Claude.ai web / Connectors)
+
+If you do not have Claude Desktop installed, or you want to test from Claude.ai web (Custom
+Connectors) or share the demo with someone else, expose the local server via a Cloudflare quick
+tunnel. This pattern follows Den Delimarsky's recommended approach for testing remote MCP
+servers.
+
+### 1. Install cloudflared (one-time)
+
+```
+winget install --id Cloudflare.cloudflared
+```
+
+macOS / Linux: see [Cloudflare's install docs](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/).
+
+### 2. Start the tunnel
+
+With the MCP server running on port 3001, in a **separate** terminal:
+
+```
+cloudflared tunnel --url http://localhost:3001
+```
+
+Cloudflared prints a public HTTPS URL such as:
+
+```
+https://lisa-stretch-all-notices.trycloudflare.com
+```
+
+The MCP endpoint is `<that-url>/mcp`. Quick tunnels are anonymous and ephemeral — the URL
+changes every time you restart `cloudflared`.
+
+### 3a. Use with Claude.ai web (Custom Connectors)
+
+In Claude.ai → **Settings → Connectors → Add custom connector**, paste the tunnel URL with
+`/mcp` appended, e.g. `https://lisa-stretch-all-notices.trycloudflare.com/mcp`. Save and enable
+the connector for the chat. Then paste `system-prompt.md` into Project / Custom instructions.
+
+### 3b. Use with Claude Desktop (without `mcp-remote` shim)
+
+Replace the `mcpServers` entry in `claude_desktop_config.json` with the remote URL form (no
+stdio bridge needed):
+
+```json
+{
+  "mcpServers": {
+    "vehicle-genui-demo-a": {
+      "url": "https://lisa-stretch-all-notices.trycloudflare.com/mcp"
+    }
+  }
+}
+```
+
+Then fully quit and restart Claude Desktop.
+
+---
+
 ## Try it
 
 With the server running and Claude Desktop restarted, ask any of these five golden-path

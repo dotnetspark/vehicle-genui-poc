@@ -41,3 +41,6 @@ pnpm-debug.log*
 .squad/.scratch/
 # Squad: SubSquad activation file (local to this machine)
 .squad-workstream
+
+# Copilot CLI session state
+.copilot/
