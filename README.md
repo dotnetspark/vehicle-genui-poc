@@ -110,9 +110,16 @@ uv pip install -r src/etl/requirements.txt
 #      docker compose exec db psql -U postgres -d vehicles -c 'TRUNCATE fact_registrations;'
 uv run python src/etl/etl.py
 
-# 6. Demo A — open Claude Desktop, paste src/demo-a-mcp-apps/claude-desktop-config.json
-#    into your claude_desktop_config.json, restart Claude Desktop, use the system prompt
-#    in src/demo-a-mcp-apps/system-prompt.md
+# 6. Demo A — MCP Apps (v0.2.0)
+#    Full walkthrough: src/demo-a-mcp-apps/README.md
+#      a. Apply the read-only role (one-time, idempotent):
+#           Windows: Get-Content src/demo-a-mcp-apps/setup-readonly-role.sql | docker exec -i vehicle-agui-poc-db-1 psql -U postgres -d vehicles
+#           macOS/Linux: cat src/demo-a-mcp-apps/setup-readonly-role.sql | docker exec -i vehicle-agui-poc-db-1 psql -U postgres -d vehicles
+#      b. cd src/demo-a-mcp-apps && npm install && npm run build && npm run serve
+#      c. Merge claude-desktop-config.json into %APPDATA%\Claude\claude_desktop_config.json (Windows)
+#         or ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)
+#      d. Paste system-prompt.md into Claude Desktop → Settings → Profile → Custom instructions
+#      e. Quit and restart Claude Desktop (tray icon Quit)
 
 # 7. Demo B — start the dashboard
 cd src/demo-b-copilotkit/frontend && pnpm install && pnpm dev
@@ -139,6 +146,15 @@ cd src/demo-b-copilotkit/frontend && pnpm install && pnpm dev
 | [`docs/COMPARISON.md`](./docs/COMPARISON.md) | Final comparison findings |
 | [`CHANGELOG.md`](./CHANGELOG.md) | Version history |
 | [`.specify/constitution.md`](./.specify/constitution.md) | Non-negotiable project principles |
+
+---
+
+## Demos
+
+| Demo | Surface | Status | README |
+|------|---------|--------|--------|
+| Demo A — MCP Apps | Charts as sandboxed iframes inside Claude Desktop (SEP-1865) | v0.2.0 — in progress | [`src/demo-a-mcp-apps/README.md`](./src/demo-a-mcp-apps/README.md) |
+| Demo B — CopilotKit | Charts in a Vite + React dashboard (AG-UI) | planned — v0.3.0 | `src/demo-b-copilotkit/README.md` (coming soon) |
 
 ---
 

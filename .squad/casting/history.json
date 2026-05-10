@@ -1,0 +1,23 @@
+{
+  "assignment_cast_snapshots": {
+    "init-2026-05-08": {
+      "agents": [
+        "Ripley",
+        "Parker",
+        "Dallas",
+        "Lambert",
+        "Ash"
+      ],
+      "assigned_at": "2026-05-08T22:33:52Z",
+      "universe": "Alien",
+      "reason": "Initial team cast — research PoC with mixed TS/Python/data work, Nostromo crew fits pressure-and-function ethos"
+    }
+  },
+  "universe_usage_history": [
+    {
+      "assigned_at": "2026-05-08T22:33:52Z",
+      "universe": "Alien",
+      "assignment_id": "init-2026-05-08"
+    }
+  ]
+}

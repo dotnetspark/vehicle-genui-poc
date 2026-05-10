@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Feature 002 — Phase 6 verification (v0.2.0 milestone gate)**:
+  - Five golden-path queries executed end-to-end in **Claude for Windows v1.6608**
+    (UWP / Microsoft Store build) via a `cloudflared` quick tunnel exposing the
+    local MCP server. All five charts rendered inline.
+  - `src/demo-a-mcp-apps/README.md` — new "Alternative — remote testing via
+    cloudflared (Claude.ai web / Connectors)" section documenting the tunnel
+    workflow plus the Claude Desktop remote-URL connector form (no
+    `mcp-remote` stdio shim).
+  - Repo `.gitignore` — added `.copilot/` (Copilot CLI session state).
+
 ### Changed
 
 - **Constitution v1.1.0** — Article III amended from "No Custom Query Tools"
@@ -21,6 +33,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tech-stack sections updated to match. Closes #10.
 
 ### Added
+
+- **Feature 002 — Demo A MCP Apps client wiring (Phases 3–5)**:
+  - `src/demo-a-mcp-apps/mcp-app.html` + `src/mcp-app.ts` — bundled iframe
+    entry that wires the `@modelcontextprotocol/ext-apps` `App` to the chart
+    renderer and routes tool results into the DOM.
+  - `src/demo-a-mcp-apps/src/chart-renderer.ts` — pure `pickChartType` ladder
+    (line / bar / donut / table) plus a Chart.js 4 renderer with the
+    fuel-colour palette (electric green, hybrid blue, petrol/diesel grey,
+    gas amber, other light grey) and an HTML-table fallback (including a
+    "No data" message for empty result sets).
+  - `vite-plugin-singlefile` build emits a single `dist/mcp-app.html`
+    (~510 KB; over the original ~400 KB target due to `zod` pulled in by
+    `ext-apps` — documented in `.squad/decisions.md`).
+  - End-to-end `resources/read` confirmed: Phase 2's resource handler now
+    serves the bundled HTML body (`mimeType: text/html;profile=mcp-app`,
+    Chart.js detected in payload).
+  - `src/demo-a-mcp-apps/claude-desktop-config.json` — `mcpServers` snippet
+    (`npx mcp-remote http://localhost:3001/mcp`) for contributors to merge
+    into their own `claude_desktop_config.json`.
+  - `src/demo-a-mcp-apps/system-prompt.md` — schema-first system prompt
+    paste-target for Claude Desktop → Settings → Profile → Custom
+    instructions; covers `pg_catalog` schema introspection, the
+    `query_vehicles({ sql })` contract, the renderer column ladder, and an
+    explicit no-fabrication rule. No per-question SQL templates
+    (Article III v1.1.0).
+  - `src/demo-a-mcp-apps/README.md` + root `README.md` Quick Start update —
+    one-time readonly-role setup, build/serve, Claude Desktop wiring, the
+    five golden-path questions, and a short troubleshooting section.
+
+- **Feature 002 — Demo A MCP Apps server (Phase 2)**:
+  - `src/demo-a-mcp-apps/setup-readonly-role.sql` — idempotent DDL creating
+    the `vehicles_readonly` Postgres role with `SELECT`-only on `public`.
+    Verified: `SELECT` succeeds, `CREATE TABLE` is rejected with
+    `permission denied for schema public`.
+  - `src/demo-a-mcp-apps/server.ts` — Express 5 + MCP `StreamableHTTPServerTransport`
+    on `POST /mcp` (port 3001). Registers a generic `query_vehicles` tool
+    via `registerAppTool` (Zod `{ sql: string }` input, returns rows under
+    `structuredContent.rows`, `_meta.ui.resourceUri` linked to the bundled
+    UI). Registers the `ui://vehicle/chart-renderer/mcp-app.html` resource
+    via `registerAppResource` — handler reads `dist/mcp-app.html` at request
+    time and returns `isError: true` if the bundle has not been built yet.
+  - End-to-end smoke test verified: `tools/list` advertises `query_vehicles`
+    with the `_meta.ui` linkage; a `SELECT` over `fact_registrations` returns
+    the top makes (FORD, VAUXHALL, MERCEDES, RENAULT, VOLKSWAGEN);
+    a `CREATE TABLE` is rejected with `isError: true`; `resources/read`
+    returns the placeholder bundle (real UI lands in Phase 3).
 
 - **Feature 001 — ETL + Postgres schema foundation** (#1, #2, #3, #4):
   - `docker-compose.yml` runs Postgres 16 (Alpine) on `localhost:5432` with

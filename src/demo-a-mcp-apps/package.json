@@ -1,0 +1,32 @@
+{
+  "name": "vehicle-genui-demo-a",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Demo A — MCP Apps surface for vehicle-genui-poc",
+  "scripts": {
+    "build": "cross-env INPUT=mcp-app.html vite build",
+    "serve": "tsx --env-file=../../.env server.ts",
+    "start": "tsx --env-file=../../.env server.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/ext-apps": "^1.6.0",
+    "pg": "^8.20.0",
+    "chart.js": "^4.5.1",
+    "express": "^5.0.0",
+    "cors": "^2.8.5",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "tsx": "latest",
+    "vite": "^6.0.0",
+    "vite-plugin-singlefile": "^2.3.2",
+    "cross-env": "latest",
+    "@types/node": "^22",
+    "@types/express": "^5",
+    "@types/cors": "^2",
+    "@types/pg": "^8"
+  }
+}
