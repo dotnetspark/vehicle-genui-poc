@@ -101,6 +101,29 @@ on a like-for-like basis.
 - [ ] Floating bottom-right `<CopilotPopup />`, **collapsed by default**.
 - [ ] "Agent is working…" spinner shown while a tool call is in flight.
 
+### Defence-in-depth (shared role hardening)
+
+- [ ] Demo B's runtime connects via the same `vehicles_readonly` role
+      hardened in Feature 003: `SELECT` granted only on the four
+      whitelisted relations (`dim_vehicle`, `dim_period`,
+      `fact_registrations`, `v_schema_summary`); blanket
+      `GRANT ALL ON ALL TABLES` and `ALTER DEFAULT PRIVILEGES` are
+      explicitly *revoked* so future migrations cannot silently expose
+      new tables to the LLM. Plus role-level
+      `default_transaction_read_only = on` and `statement_timeout = 10s`.
+      No code change needed in Demo B — verified by the role's
+      `pg_catalog` config at runtime startup.
+
+### Tool-level result caching
+
+- [ ] Demo B's `query_vehicles` server action wraps `pg.query` in an
+      in-process LRU keyed by the trimmed SQL string (e.g.,
+      `lru-cache`, `max: 200`, `ttl: 1h`). Returns
+      `{ rows, cached: boolean }` so the comparison doc can show
+      cache-hit telemetry. No SQL normalisation — raw string keys only.
+      Cache resets on process restart (acceptable for the PoC; ETL
+      re-runs require a runtime restart anyway).
+
 ### End-to-end verification (milestone gate, #16)
 
 All five queries trigger the correct frontend tool and render the correct

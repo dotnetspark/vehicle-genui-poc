@@ -18,11 +18,20 @@ $$;
 
 GRANT CONNECT ON DATABASE vehicles TO vehicles_readonly;
 GRANT USAGE ON SCHEMA public TO vehicles_readonly;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO vehicles_readonly;
 
--- Ensure future tables (added by later schema migrations) are also readable.
-ALTER DEFAULT PRIVILEGES IN SCHEMA public
-    GRANT SELECT ON TABLES TO vehicles_readonly;
+-- Allow-list, secure-by-default. We deliberately do NOT use
+-- `GRANT SELECT ON ALL TABLES` or `ALTER DEFAULT PRIVILEGES`: a future
+-- migration that adds an unrelated table (e.g., users, audit, secrets)
+-- must require an explicit GRANT here before the LLM can read it. Revoke
+-- both first to keep this script idempotent across upgrades from earlier
+-- versions of this file that did use the blanket grants.
+REVOKE SELECT ON ALL TABLES IN SCHEMA public FROM vehicles_readonly;
+ALTER  DEFAULT PRIVILEGES IN SCHEMA public
+       REVOKE SELECT ON TABLES FROM vehicles_readonly;
+
+GRANT SELECT ON dim_vehicle, dim_period, fact_registrations,
+                v_schema_summary
+      TO vehicles_readonly;
 
 -- Defence-in-depth on top of SELECT-only grants. The role is the SQL author for
 -- both demos; the LLM composes arbitrary SQL at runtime. These two settings stop
