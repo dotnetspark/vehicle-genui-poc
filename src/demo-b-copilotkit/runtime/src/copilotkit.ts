@@ -7,7 +7,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Request, Response } from "express";
 import { queryVehicles } from "./actions/queryVehicles.js";
 
-const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5";
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929";
 
 if (!process.env.ANTHROPIC_API_KEY) {
   console.warn("[copilotkit] WARNING: ANTHROPIC_API_KEY is not set; chat will fail at request time.");
