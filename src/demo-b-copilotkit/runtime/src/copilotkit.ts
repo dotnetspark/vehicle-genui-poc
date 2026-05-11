@@ -49,7 +49,11 @@ export function mountCopilotKit(app: import("express").Express): void {
     runtime,
     serviceAdapter,
   });
-  app.use(COPILOTKIT_ENDPOINT, (req: Request, res: Response) => {
+  // Use `app.all` (not `app.use(path, ...)`) so Express does NOT strip the
+  // `/api/copilotkit` prefix from `req.url` — Hono inside the runtime
+  // matches against the full path via `basePath`.
+  const matcher = `${COPILOTKIT_ENDPOINT}{/*splat}`;
+  app.all(matcher, (req: Request, res: Response) => {
     return handler(req, res);
   });
 }

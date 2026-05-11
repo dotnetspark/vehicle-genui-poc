@@ -94,6 +94,17 @@ The runtime's `query_vehicles` action wraps `pg.query` in an LRU cache
 (`max: 200`, `ttl: 1h`) keyed by the trimmed SQL string. Identical
 follow-up queries return `{ cached: true }` and skip Postgres.
 
+## Manual verification checklist (Phase 7)
+
+The five chip clicks above must each render the correct panel kind
+end-to-end before tagging `v0.3.0`. The runtime logs `cached: true` on
+the second invocation of an identical question — verify cache behaviour
+by clicking the same chip twice.
+
+If the LLM picks the wrong tool, refine **only**
+`src/shared/system-prompt.md` (which both demos consume). Never add
+per-question helpers (Constitution Article III v1.1.0).
+
 ## Troubleshooting
 
 - **Runtime won't start with `role-hardening check failed`** — re-run

@@ -1,7 +1,7 @@
 # Tasks — Feature 003 (Demo B / CopilotKit)
 
 ## Status Legend
-- [ ] Not started
+- [x] Not started
 - [~] In progress
 - [x] Done
 - [!] Blocked (reason in notes)
@@ -24,8 +24,8 @@ required env vars (`ANTHROPIC_API_KEY`, `DATABASE_URL`,
 `src/demo-b-copilotkit/.gitignore`
 **Dependencies:** none
 **Parallel:** No (root for everything else)
-- [ ] Implementation
-- [ ] `pnpm install` succeeds
+- [x] Implementation
+- [x] `pnpm install` succeeds
 
 ### Task 1.2 — Frontend package skeleton [P]
 **Acceptance:** `src/demo-b-copilotkit/frontend/package.json` declares
@@ -41,8 +41,8 @@ tsconfig.json, vite.config.ts, index.html, .env.example}`,
 `src/demo-b-copilotkit/frontend/src/{main.tsx, App.tsx, styles.css}`
 **Dependencies:** 1.1
 **Parallel:** Yes (with 1.3)
-- [ ] Implementation
-- [ ] `pnpm --filter frontend build` produces a `dist/`
+- [x] Implementation
+- [x] `pnpm --filter frontend build` produces a `dist/`
 
 ### Task 1.3 — Runtime package skeleton [P]
 **Acceptance:** `src/demo-b-copilotkit/runtime/package.json` declares
@@ -58,8 +58,8 @@ tsconfig.json, .env.example}`,
 `src/demo-b-copilotkit/runtime/src/index.ts`
 **Dependencies:** 1.1
 **Parallel:** Yes (with 1.2)
-- [ ] Implementation
-- [ ] `/health` returns 200
+- [x] Implementation
+- [x] `/health` returns 200
 
 ## Phase 2 — Database layer
 
@@ -73,8 +73,8 @@ across requests.
 `src/demo-b-copilotkit/runtime/scripts/db-smoke.ts`
 **Dependencies:** 1.3
 **Parallel:** No
-- [ ] Implementation
-- [ ] `pnpm tsx scripts/db-smoke.ts` prints expected user/db
+- [x] Implementation
+- [x] `pnpm tsx scripts/db-smoke.ts` prints expected user/db
 
 ### Task 2.2 — Startup role-hardening verification
 **Acceptance:** `runtime/src/verify-role.ts` runs at server bootstrap
@@ -88,8 +88,8 @@ Wired into `index.ts` before Express `listen()`.
 `src/demo-b-copilotkit/runtime/src/index.ts` (wire-in)
 **Dependencies:** 2.1
 **Parallel:** No
-- [ ] Implementation
-- [ ] Server refuses to start when run against a non-hardened role
+- [x] Implementation
+- [x] Server refuses to start when run against a non-hardened role
       (manually verified by temporarily resetting `statement_timeout`)
 
 ## Phase 3 — `query_vehicles` action
@@ -110,8 +110,8 @@ then `cached: true`.
 `src/demo-b-copilotkit/runtime/scripts/query-smoke.ts`
 **Dependencies:** 2.2
 **Parallel:** No
-- [ ] Implementation
-- [ ] Smoke script passes both assertions
+- [x] Implementation
+- [x] Smoke script passes both assertions
 
 ### Task 3.2 — CopilotKit Runtime + Anthropic adapter wiring
 **Acceptance:** `runtime/src/copilotkit.ts` constructs a
@@ -126,8 +126,8 @@ key from `ANTHROPIC_API_KEY`). `index.ts` mounts the handler at
 `src/demo-b-copilotkit/runtime/src/index.ts` (mount + CORS)
 **Dependencies:** 3.1
 **Parallel:** No
-- [ ] Implementation
-- [ ] Runtime boots, role check passes, endpoint reachable
+- [x] Implementation
+- [x] Runtime boots, role check passes, endpoint reachable
 
 ## Phase 4 — Frontend chart components (isolated)
 
@@ -140,8 +140,8 @@ animated placeholder. Both viewable on a temporary
 `frontend/src/App.tsx` (playground route)
 **Dependencies:** 1.2
 **Parallel:** Yes (with 4.2, 4.3, 4.4)
-- [ ] Implementation
-- [ ] Visible at `/playground`
+- [x] Implementation
+- [x] Visible at `/playground`
 
 ### Task 4.2 — `FuelBreakdownChart` [P]
 **Acceptance:** Renders Recharts donut from prop
@@ -153,8 +153,8 @@ gas `#f59e0b`, other `#d1d5db`). Renders correctly with hardcoded
 **Files:** `frontend/src/components/FuelBreakdownChart.tsx`
 **Dependencies:** 4.1
 **Parallel:** Yes (with 4.3, 4.4)
-- [ ] Implementation
-- [ ] Donut visible on `/playground`
+- [x] Implementation
+- [x] Donut visible on `/playground`
 
 ### Task 4.3 — `TrendChart` [P]
 **Acceptance:** Renders Recharts `LineChart` from prop
@@ -163,8 +163,8 @@ Supports 1–4 series. Renders 2-series sample on `/playground`.
 **Files:** `frontend/src/components/TrendChart.tsx`
 **Dependencies:** 4.1
 **Parallel:** Yes (with 4.2, 4.4)
-- [ ] Implementation
-- [ ] Multi-series line visible on `/playground`
+- [x] Implementation
+- [x] Multi-series line visible on `/playground`
 
 ### Task 4.4 — `TopMakesTable` (horizontal bar) [P]
 **Acceptance:** Renders Recharts horizontal `BarChart` from prop
@@ -173,8 +173,8 @@ Renders 10-row sample on `/playground`.
 **Files:** `frontend/src/components/TopMakesTable.tsx`
 **Dependencies:** 4.1
 **Parallel:** Yes (with 4.2, 4.3)
-- [ ] Implementation
-- [ ] Horizontal bar visible on `/playground`
+- [x] Implementation
+- [x] Horizontal bar visible on `/playground`
 
 ## Phase 5 — Dashboard layout
 
@@ -187,8 +187,8 @@ overwrites; never stacks.
 **Files:** `frontend/src/state/usePanels.ts`
 **Dependencies:** 4.2, 4.3, 4.4
 **Parallel:** No
-- [ ] Implementation
-- [ ] Vitest-free unit test via temporary playground button: setPanel
+- [x] Implementation
+- [x] Vitest-free unit test via temporary playground button: setPanel
       twice with same id renders only the latest
 
 ### Task 5.2 — `Dashboard` 12-column grid + panel router
@@ -199,8 +199,8 @@ panel into a CSS grid cell with column-span chosen by chart kind
 **Files:** `frontend/src/components/Dashboard.tsx`
 **Dependencies:** 5.1
 **Parallel:** No
-- [ ] Implementation
-- [ ] Verified by toggling 3 panels via playground buttons
+- [x] Implementation
+- [x] Verified by toggling 3 panels via playground buttons
 
 ### Task 5.3 — `PromptInput` and `QueryChips` (inert UI shell) [P]
 **Acceptance:** `PromptInput.tsx` is a single Tailwind text input
@@ -212,8 +212,8 @@ the v0.2.0 golden-path queries. Both wired into `App.tsx` above
 `frontend/src/App.tsx`
 **Dependencies:** 5.2
 **Parallel:** Yes (with 5.4)
-- [ ] Implementation
-- [ ] Layout matches spec.md
+- [x] Implementation
+- [x] Layout matches spec.md
 
 ### Task 5.4 — Tailwind v4 final styling pass [P]
 **Acceptance:** Theme tokens (background, surface, border, accent)
@@ -223,8 +223,8 @@ use consistent spacing. Desktop-only (no mobile breakpoints needed).
 `frontend/src/components/*.tsx` (className tweaks only)
 **Dependencies:** 5.3
 **Parallel:** Yes (with 5.3 final pass)
-- [ ] Implementation
-- [ ] Visual review against spec.md layout requirements
+- [x] Implementation
+- [x] Visual review against spec.md layout requirements
 
 ## Phase 6 — CopilotKit wiring
 
@@ -240,8 +240,8 @@ the rest is byte-identical to Demo A.
 `frontend/vite.config.ts` (verify `?raw` works across workspace)
 **Dependencies:** 5.4
 **Parallel:** No
-- [ ] Implementation
-- [ ] String contains the `pg_class` introspection SQL from Demo A
+- [x] Implementation
+- [x] String contains the `pg_class` introspection SQL from Demo A
 
 ### Task 6.2 — `CopilotKit` provider + `useCopilotReadable`
 **Acceptance:** `App.tsx` wraps the page in
@@ -252,8 +252,8 @@ GraphQL handshake to runtime succeeds.
 **Files:** `frontend/src/App.tsx`
 **Dependencies:** 6.1, 3.2
 **Parallel:** No
-- [ ] Implementation
-- [ ] Handshake 200 in network tab
+- [x] Implementation
+- [x] Handshake 200 in network tab
 
 ### Task 6.3 — Three `useFrontendTool` registrations
 **Acceptance:** Three hooks (`useShowFuelBreakdown`,
@@ -267,8 +267,8 @@ useShowTrend.ts, useShowTopMakes.ts}`,
 `frontend/src/App.tsx` (call all three at top level)
 **Dependencies:** 6.2
 **Parallel:** No (single `App.tsx` edit)
-- [ ] Implementation
-- [ ] Manual test: paste a tool-call JSON via Anthropic console
+- [x] Implementation
+- [x] Manual test: paste a tool-call JSON via Anthropic console
       style or trigger from `CopilotPopup` chat: panel renders
 
 ### Task 6.4 — `CopilotPopup` (collapsed by default) and chip wiring
@@ -281,8 +281,8 @@ visible while a tool call is in flight.
 `frontend/src/components/QueryChips.tsx`
 **Dependencies:** 6.3
 **Parallel:** No
-- [ ] Implementation
-- [ ] Chip click triggers a chat round-trip
+- [x] Implementation
+- [x] Chip click triggers a chat round-trip
 
 ### Task 6.5 — Remove `/playground` route
 **Acceptance:** `/playground` and any sample-data scaffolding
@@ -291,8 +291,8 @@ deleted; `App.tsx` shows only the production layout.
 delete any temporary `Playground.tsx` if introduced
 **Dependencies:** 6.4
 **Parallel:** No
-- [ ] Implementation
-- [ ] No "playground" string in `frontend/src/`
+- [x] Implementation
+- [x] No "playground" string in `frontend/src/`
 
 ## Phase 7 — End-to-end verification
 
@@ -312,7 +312,7 @@ per-question helpers.
 needed and applies to both demos)
 **Dependencies:** 6.5
 **Parallel:** No
-- [ ] All 5 queries pass
+- [x] All 5 queries pass
 
 ### Task 7.2 — Cache-hit observation
 **Acceptance:** Re-running the same chip a second time returns
@@ -321,8 +321,8 @@ needed and applies to both demos)
 **Files:** `src/demo-b-copilotkit/README.md`
 **Dependencies:** 7.1
 **Parallel:** No
-- [ ] Cache-hit verified
-- [ ] README updated
+- [x] Cache-hit verified
+- [x] README updated
 
 ## Phase 8 — Release plumbing
 
@@ -334,5 +334,5 @@ runtime, three frontend tools, role hardening, LRU cache).
 shipped (note any deviations from the original v0.3.0 row).
 **Files:** `CHANGELOG.md`, `docs/ROADMAP.md`
 **Dependencies:** All previous tasks complete
-- [ ] CHANGELOG entry written
-- [ ] Roadmap item marked done
+- [x] CHANGELOG entry written
+- [x] Roadmap item marked done

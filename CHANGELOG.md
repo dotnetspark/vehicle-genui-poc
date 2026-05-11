@@ -9,6 +9,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Feature 003 — Demo B (CopilotKit Static AG-UI dashboard)**:
+  - `src/demo-b-copilotkit/` pnpm workspace with two packages:
+    - `frontend/` — Vite 7 + React 19 + Tailwind v4 + Recharts 3 dashboard
+      with a `<CopilotKit>` provider, a 12-column grid, three Generative-UI
+      panels (`FuelBreakdownChart` donut, `TrendChart` line/multi-series,
+      `TopMakesTable` horizontal bar), a `<CopilotPopup>` chat surface, and
+      a chip-bar for the five golden-path queries.
+    - `runtime/` — Express 5 + `@copilotkit/runtime` 1.57 + Anthropic
+      adapter (Claude Sonnet 4.5). Exposes `POST /api/copilotkit` and a
+      `GET /health` probe. Owns a single generic server action
+      `query_vehicles({ sql })` (Constitution Article III v1.1.0) backed by
+      an LRU cache (`max=200`, `ttl=1h`) keyed by trimmed SQL.
+  - **Hardened `vehicles_readonly` Postgres role** (shared with Demo A,
+    `src/demo-a-mcp-apps/setup-readonly-role.sql`):
+    - `default_transaction_read_only = on`, `statement_timeout = 10s`,
+    - allow-list `SELECT` on exactly four relations
+      (`dim_vehicle`, `dim_period`, `fact_registrations`, `v_schema_summary`)
+      — no blanket `GRANT ALL`, so future tables are not auto-exposed.
+  - **Startup role-hardening verifier** (`runtime/src/verify-role.ts`):
+    fails the runtime process at boot unless all three guarantees hold.
+  - **Shared system prompt** moved from `src/demo-a-mcp-apps/system-prompt.md`
+    to `src/shared/system-prompt.md` (Constitution Article II — sharing
+    only via `src/shared/` or the database). Demo B prepends a small header
+    describing its three frontend tools (`show_fuel_breakdown`, `show_trend`,
+    `show_top_makes`) and consumes the rest byte-for-byte via Vite `?raw`.
+  - Three `useCopilotAction` registrations in `frontend/src/tools/` render
+    `<ChartSkeleton />` while the tool call is streaming and the matching
+    chart component on completion. Each writes to a tiny
+    `useSyncExternalStore`-backed panel store with replace-by-id semantics
+    (no panel stacking).
+  - `src/demo-b-copilotkit/README.md` documents the two-process model,
+    required env vars (`ANTHROPIC_API_KEY`, `DATABASE_URL`,
+    `VITE_COPILOT_RUNTIME_URL`), and the manual Phase 7 verification
+    checklist (the five golden-path queries).
+
+### Added
+
 - **Feature 002 — Phase 6 verification (v0.2.0 milestone gate)**:
   - Five golden-path queries executed end-to-end in **Claude for Windows v1.6608**
     (UWP / Microsoft Store build) via a `cloudflared` quick tunnel exposing the
