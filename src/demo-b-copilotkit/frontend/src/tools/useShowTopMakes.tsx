@@ -6,6 +6,7 @@ import { setPanel } from "../state/usePanels";
 export function useShowTopMakes() {
   useCopilotAction({
     name: "show_top_makes",
+    available: "frontend",
     description:
       "Render a horizontal bar chart of top vehicle makes by count. " +
       "Call AFTER query_vehicles has returned rows.",
