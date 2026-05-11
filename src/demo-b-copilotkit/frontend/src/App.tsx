@@ -1,4 +1,5 @@
-import { CopilotKit, useCopilotChatHeadless_c, useCopilotReadable } from "@copilotkit/react-core";
+import { CopilotKit, useCopilotChat, useCopilotReadable } from "@copilotkit/react-core";
+import { TextMessage, Role } from "@copilotkit/runtime-client-gql";
 import { CopilotPopup } from "@copilotkit/react-ui";
 import { Dashboard } from "./components/Dashboard";
 import { PromptInput } from "./components/PromptInput";
@@ -17,14 +18,10 @@ function Shell() {
   useShowTrend();
   useShowTopMakes();
 
-  const { sendMessage } = useCopilotChatHeadless_c();
+  const { appendMessage } = useCopilotChat();
 
   const ask = (text: string) => {
-    void sendMessage({
-      id: crypto.randomUUID(),
-      role: "user",
-      content: text,
-    });
+    void appendMessage(new TextMessage({ content: text, role: Role.User }));
   };
 
   return (
