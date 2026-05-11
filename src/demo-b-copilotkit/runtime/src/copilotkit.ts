@@ -13,7 +13,10 @@ if (!process.env.ANTHROPIC_API_KEY) {
   console.warn("[copilotkit] WARNING: ANTHROPIC_API_KEY is not set; chat will fail at request time.");
 }
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  baseURL: "https://api.anthropic.com/v1",
+});
 const serviceAdapter = new AnthropicAdapter({ anthropic, model: ANTHROPIC_MODEL });
 
 const runtime = new CopilotRuntime({
