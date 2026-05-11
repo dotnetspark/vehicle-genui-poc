@@ -26,10 +26,13 @@ export function useShowFuelBreakdown() {
         ],
       },
     ],
+    handler: async ({ panelId, title, data }: { panelId: string; title: string; data: FuelDatum[] }) => {
+      setPanel(panelId, { kind: "fuel", title, data });
+      return { ok: true, panelId };
+    },
     render: ({ status, args }) => {
       if (status !== "complete") return <ChartSkeleton />;
       const data = (args.data ?? []) as FuelDatum[];
-      setPanel(args.panelId as string, { kind: "fuel", title: args.title as string, data });
       return <FuelBreakdownChart data={data} />;
     },
   });

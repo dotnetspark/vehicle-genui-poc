@@ -33,10 +33,13 @@ export function useShowTrend() {
         ],
       },
     ],
+    handler: async ({ panelId, title, series }: { panelId: string; title: string; series: Series[] }) => {
+      setPanel(panelId, { kind: "trend", title, series });
+      return { ok: true, panelId };
+    },
     render: ({ status, args }) => {
       if (status !== "complete") return <ChartSkeleton />;
       const series = (args.series ?? []) as Series[];
-      setPanel(args.panelId as string, { kind: "trend", title: args.title as string, series });
       return <TrendChart series={series} />;
     },
   });

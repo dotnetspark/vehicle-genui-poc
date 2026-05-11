@@ -23,10 +23,13 @@ export function useShowTopMakes() {
         ],
       },
     ],
+    handler: async ({ panelId, title, data }: { panelId: string; title: string; data: MakeDatum[] }) => {
+      setPanel(panelId, { kind: "makes", title, data });
+      return { ok: true, panelId };
+    },
     render: ({ status, args }) => {
       if (status !== "complete") return <ChartSkeleton />;
       const data = (args.data ?? []) as MakeDatum[];
-      setPanel(args.panelId as string, { kind: "makes", title: args.title as string, data });
       return <TopMakesTable data={data} />;
     },
   });
