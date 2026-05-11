@@ -6,7 +6,6 @@ import { setPanel } from "../state/usePanels";
 export function useShowFuelBreakdown() {
   useCopilotAction({
     name: "show_fuel_breakdown",
-    available: "frontend",
     description:
       "Render a donut chart showing the fuel-type distribution for a slice of the vehicle data. " +
       "Call AFTER query_vehicles has returned rows.",

@@ -6,7 +6,6 @@ import { setPanel } from "../state/usePanels";
 export function useShowTrend() {
   useCopilotAction({
     name: "show_trend",
-    available: "frontend",
     description:
       "Render a line chart showing one or more time series. " +
       "Call AFTER query_vehicles has returned rows.",
