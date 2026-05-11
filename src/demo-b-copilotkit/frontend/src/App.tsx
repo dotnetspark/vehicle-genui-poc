@@ -1,8 +1,62 @@
+import { CopilotKit, useCopilotChatHeadless_c, useCopilotReadable } from "@copilotkit/react-core";
+import { CopilotPopup } from "@copilotkit/react-ui";
+import { Dashboard } from "./components/Dashboard";
+import { PromptInput } from "./components/PromptInput";
+import { QueryChips } from "./components/QueryChips";
+import { SYSTEM_PROMPT } from "./prompt/system-prompt";
+import { useShowFuelBreakdown } from "./tools/useShowFuelBreakdown";
+import { useShowTrend } from "./tools/useShowTrend";
+import { useShowTopMakes } from "./tools/useShowTopMakes";
+
+const RUNTIME_URL =
+  import.meta.env.VITE_COPILOT_RUNTIME_URL ?? "http://localhost:4001/api/copilotkit";
+
+function Shell() {
+  useCopilotReadable({ description: "system instructions", value: SYSTEM_PROMPT });
+  useShowFuelBreakdown();
+  useShowTrend();
+  useShowTopMakes();
+
+  const { sendMessage } = useCopilotChatHeadless_c();
+
+  const ask = (text: string) => {
+    void sendMessage({
+      id: crypto.randomUUID(),
+      role: "user",
+      content: text,
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 px-6 py-8">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
+        <header>
+          <h1 className="text-2xl font-bold text-slate-900">
+            UK Vehicle Registrations — Demo B
+          </h1>
+          <p className="text-sm text-slate-600">
+            CopilotKit Static AG-UI · Generative dashboard powered by Claude
+          </p>
+        </header>
+        <PromptInput onSubmit={ask} />
+        <QueryChips onPick={ask} />
+        <Dashboard />
+      </div>
+      <CopilotPopup
+        defaultOpen={false}
+        labels={{
+          title: "Vehicles assistant",
+          initial: "Ask about UK vehicle registrations…",
+        }}
+      />
+    </div>
+  );
+}
+
 export default function App() {
   return (
-    <div className="p-8 text-slate-900">
-      <h1 className="text-2xl font-semibold">Vehicle GenUI — Demo B</h1>
-      <p className="mt-2 text-slate-600">Scaffold ready. Wiring in subsequent tasks.</p>
-    </div>
+    <CopilotKit runtimeUrl={RUNTIME_URL}>
+      <Shell />
+    </CopilotKit>
   );
 }
