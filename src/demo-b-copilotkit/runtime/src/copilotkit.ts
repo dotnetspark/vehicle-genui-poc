@@ -44,7 +44,6 @@ export function mountCopilotKit(app: import("express").Express): void {
   const router = createCopilotExpressHandler({
     runtime,
     basePath: COPILOTKIT_ENDPOINT,
-    mode: "single-route",
   });
   app.use(router);
 }

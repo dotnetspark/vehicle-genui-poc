@@ -52,7 +52,7 @@ function Shell() {
 
 export default function App() {
   return (
-    <CopilotKit runtimeUrl={RUNTIME_URL}>
+    <CopilotKit runtimeUrl={RUNTIME_URL} useSingleEndpoint={false}>
       <Shell />
     </CopilotKit>
   );
