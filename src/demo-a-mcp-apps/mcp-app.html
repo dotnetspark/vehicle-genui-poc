@@ -3,9 +3,47 @@
   <head>
     <meta charset="utf-8" />
     <title>Vehicle GenUI Demo A</title>
+    <style>
+      :root { color-scheme: light; }
+      body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+      #root { padding: 8px; }
+      /* Skeleton — visible from iframe mount until first tool result arrives */
+      #skeleton {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+        height: 320px;
+      }
+      #skeleton .bar {
+        background: linear-gradient(90deg,#eef2f7 0%,#e2e8f0 50%,#eef2f7 100%);
+        background-size: 200% 100%;
+        border-radius: 6px;
+        animation: shimmer 1.4s ease-in-out infinite;
+      }
+      #skeleton .b1 { height: 14px; width: 40%; }
+      #skeleton .b2 { height: 14px; width: 25%; }
+      #skeleton .chart {
+        flex: 1;
+        background: linear-gradient(90deg,#eef2f7 0%,#e2e8f0 50%,#eef2f7 100%);
+        background-size: 200% 100%;
+        border-radius: 8px;
+        animation: shimmer 1.4s ease-in-out infinite;
+      }
+      @keyframes shimmer {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="skeleton" aria-label="Loading chart">
+        <div class="bar b1"></div>
+        <div class="bar b2"></div>
+        <div class="chart"></div>
+      </div>
+    </div>
     <script type="module" src="/src/mcp-app.ts"></script>
   </body>
 </html>
