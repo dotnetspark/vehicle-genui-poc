@@ -66,10 +66,27 @@ function buildServer(): McpServer {
     async ({ sql }) => {
       try {
         const result = await pool.query(sql);
+        // Echo the rows back in the `text` content so the LLM can reason
+        // about results in follow-up turns. MCP Apps clients (e.g. Claude
+        // Desktop) may render the linked UI resource and hide the
+        // structuredContent rows from the model — without this echo the
+        // LLM only sees a row-count and cannot answer follow-up questions
+        // like "what was the top fuel type?". Truncated to keep context
+        // bounded on large result sets.
+        const MAX_ROWS_IN_TEXT = 50;
+        const preview = result.rows.slice(0, MAX_ROWS_IN_TEXT);
+        const truncatedNote =
+          result.rows.length > MAX_ROWS_IN_TEXT
+            ? `\n… (${result.rows.length - MAX_ROWS_IN_TEXT} more rows omitted from text; full set available in structuredContent.rows and rendered in the UI)`
+            : "";
+        const text =
+          `Returned ${result.rows.length} rows.\n\n` +
+          "```json\n" +
+          JSON.stringify(preview, null, 2) +
+          "\n```" +
+          truncatedNote;
         return {
-          content: [
-            { type: "text" as const, text: `Returned ${result.rows.length} rows.` },
-          ],
+          content: [{ type: "text" as const, text }],
           structuredContent: { rows: result.rows },
           isError: false,
         };
