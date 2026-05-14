@@ -64,18 +64,19 @@ function toNumber(v: unknown): number | null {
 }
 
 // ---------------------------------------------------------------------------
-// Modern AI-style theme — applied globally + per chart.
-// Palette: indigo / violet / cyan / emerald gradients on a near-black canvas.
+// Modern AI-style theme — light surface, indigo / violet / cyan accents.
+// Designed to read on a clean white-ish canvas (matches Claude Desktop's
+// default light UI). The bundled mcp-app.html shell uses the same palette.
 // ---------------------------------------------------------------------------
 
 const THEME = {
-  bg: "#0b0f1a",            // deep navy near-black
-  surface: "#111827",        // panel
-  fg: "#e5e7eb",             // primary text
-  muted: "#94a3b8",          // axis labels
-  grid: "rgba(148,163,184,0.12)",
+  bg: "#ffffff",             // page canvas
+  surface: "#f8fafc",        // panel / table surface
+  fg: "#0f172a",             // primary text (slate-900)
+  muted: "#64748b",          // axis labels / secondary text (slate-500)
+  grid: "rgba(15,23,42,0.08)",
   // Categorical palette — indigo, violet, cyan, emerald, amber, rose, sky, lime.
-  // Designed to read on a dark canvas; rotate through for multi-series charts.
+  // Same hues as the dark version; chosen to read on a light canvas too.
   series: [
     "#6366f1", "#a855f7", "#06b6d4", "#10b981",
     "#f59e0b", "#f43f5e", "#0ea5e9", "#84cc16",
@@ -90,7 +91,7 @@ Chart.defaults.font.size = 12;
 Chart.defaults.borderColor = THEME.grid;
 Chart.defaults.plugins.tooltip = {
   ...(Chart.defaults.plugins.tooltip ?? {}),
-  backgroundColor: "rgba(15,23,42,0.95)",
+  backgroundColor: "rgba(15,23,42,0.92)",
   borderColor: "rgba(99,102,241,0.4)",
   borderWidth: 1,
   titleColor: "#f8fafc",
@@ -118,7 +119,7 @@ function fuelColour(fuel: string): string {
   if (u === "PETROL") return "#f59e0b"; // amber
   if (u === "DIESEL") return "#64748b"; // slate
   if (u.includes("GAS")) return "#f43f5e"; // rose
-  return "#475569";
+  return "#94a3b8";
 }
 
 /** Build a vertical canvas gradient (top → bottom) for an area / bar fill. */
@@ -265,7 +266,7 @@ function renderLine(rows: Record<string, unknown>[]): void {
       pointRadius: 0,
       pointHoverRadius: 6,
       pointHoverBackgroundColor: colour,
-      pointHoverBorderColor: "#0b0f1a",
+      pointHoverBorderColor: "#ffffff",
       pointHoverBorderWidth: 2,
     };
   });
@@ -375,12 +376,12 @@ function renderTable(rows: Record<string, unknown>[]): void {
 
   const headers = Object.keys(rows[0]);
   const wrap = document.createElement("div");
-  wrap.style.cssText = "overflow:auto;border-radius:10px;border:1px solid rgba(148,163,184,0.18)";
+      wrap.style.cssText = "overflow:auto;border-radius:10px;border:1px solid rgba(15,23,42,0.08)";
 
   const table = document.createElement("table");
   table.style.cssText =
     "border-collapse:separate;border-spacing:0;width:100%;font-size:0.85rem;" +
-    "font-family:Inter,system-ui,-apple-system,sans-serif;color:#e5e7eb;background:#111827";
+    "font-family:Inter,system-ui,-apple-system,sans-serif;color:#0f172a;background:#ffffff";
 
   const thead = document.createElement("thead");
   const hr = document.createElement("tr");
@@ -388,9 +389,9 @@ function renderTable(rows: Record<string, unknown>[]): void {
     const th = document.createElement("th");
     th.textContent = h;
     th.style.cssText =
-      "padding:10px 14px;background:#1e293b;color:#a5b4fc;text-align:left;" +
+      "padding:10px 14px;background:#f1f5f9;color:#4338ca;text-align:left;" +
       "font-weight:600;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;" +
-      "border-bottom:1px solid rgba(148,163,184,0.18)";
+      "border-bottom:1px solid rgba(15,23,42,0.08)";
     hr.appendChild(th);
   });
   thead.appendChild(hr);
@@ -403,7 +404,7 @@ function renderTable(rows: Record<string, unknown>[]): void {
     headers.forEach((h) => {
       const td = document.createElement("td");
       td.textContent = String(row[h] ?? "");
-      td.style.cssText = "padding:8px 14px;border-bottom:1px solid rgba(148,163,184,0.08)";
+      td.style.cssText = "padding:8px 14px;border-bottom:1px solid rgba(15,23,42,0.05)";
       tr.appendChild(td);
     });
     tbody.appendChild(tr);

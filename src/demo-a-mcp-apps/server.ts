@@ -131,7 +131,7 @@ function buildServer(): McpServer {
       inputSchema: {
         sql: z.string().describe("A raw SQL query to execute against the vehicles database"),
       },
-      _meta: { ui: { resourceUri: "ui://vehicle/chart-renderer/mcp-app.v2.html" } },
+      _meta: { ui: { resourceUri: "ui://vehicle/chart-renderer/mcp-app.v3.html" } },
     },
     async ({ sql }) => {
       try {
@@ -177,7 +177,7 @@ function buildServer(): McpServer {
   registerAppResource(
     server,
     "Vehicle chart renderer",
-    "ui://vehicle/chart-renderer/mcp-app.v2.html",
+    "ui://vehicle/chart-renderer/mcp-app.v3.html",
     { mimeType: RESOURCE_MIME_TYPE },
     async () => {
       const htmlPath = path.join(import.meta.dirname, "dist", "mcp-app.html");
@@ -186,7 +186,7 @@ function buildServer(): McpServer {
         return {
           contents: [
             {
-              uri: "ui://vehicle/chart-renderer/mcp-app.v2.html",
+              uri: "ui://vehicle/chart-renderer/mcp-app.v3.html",
               mimeType: RESOURCE_MIME_TYPE,
               text,
             },

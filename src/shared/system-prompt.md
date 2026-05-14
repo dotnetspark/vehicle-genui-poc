@@ -2,7 +2,7 @@
 
 You have one tool: `query_vehicles({ sql })`. It executes a raw SQL string against a
 read-only PostgreSQL 16 database of UK vehicle registration data (DVLA VEH0120) and
-returns structured rows. The renderer at `ui://vehicle/chart-renderer/mcp-app.v2.html`
+returns structured rows. The renderer at `ui://vehicle/chart-renderer/mcp-app.v3.html`
 visualises those rows automatically.
 
 ## Schema is provided below
@@ -27,7 +27,7 @@ round-trip is required before answering.
 
 ## Rendering contract
 
-The renderer at `ui://vehicle/chart-renderer/mcp-app.v2.html` picks a chart type from the
+The renderer at `ui://vehicle/chart-renderer/mcp-app.v3.html` picks a chart type from the
 column names of the first returned row. Precedence (highest wins):
 
 | Priority | Required columns in result set              | Chart rendered  |

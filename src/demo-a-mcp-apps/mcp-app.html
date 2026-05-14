@@ -4,11 +4,11 @@
     <meta charset="utf-8" />
     <title>Vehicle GenUI Demo A</title>
     <style>
-      :root { color-scheme: dark; }
+      :root { color-scheme: light; }
       html, body {
         margin: 0;
-        background: #0b0f1a;
-        color: #e5e7eb;
+        background: #ffffff;
+        color: #0f172a;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         font-feature-settings: 'cv11','ss01','ss03';
       }
@@ -16,9 +16,9 @@
         padding: 16px;
         min-height: 320px;
         background:
-          radial-gradient(1200px 400px at 10% -20%, rgba(99,102,241,0.18), transparent 60%),
-          radial-gradient(900px 400px at 110% 120%, rgba(168,85,247,0.14), transparent 60%),
-          #0b0f1a;
+          radial-gradient(1200px 400px at 10% -20%, rgba(99,102,241,0.10), transparent 60%),
+          radial-gradient(900px 400px at 110% 120%, rgba(168,85,247,0.08), transparent 60%),
+          #ffffff;
         border-radius: 12px;
       }
       /* Skeleton — visible from iframe mount until first tool result arrives */
@@ -30,7 +30,7 @@
         height: 320px;
       }
       #skeleton .bar {
-        background: linear-gradient(90deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.18) 50%, rgba(99,102,241,0.08) 100%);
+        background: linear-gradient(90deg, rgba(99,102,241,0.06) 0%, rgba(168,85,247,0.16) 50%, rgba(99,102,241,0.06) 100%);
         background-size: 200% 100%;
         border-radius: 6px;
         animation: shimmer 1.4s ease-in-out infinite;
@@ -39,7 +39,7 @@
       #skeleton .b2 { height: 14px; width: 25%; }
       #skeleton .chart {
         flex: 1;
-        background: linear-gradient(90deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.18) 50%, rgba(99,102,241,0.08) 100%);
+        background: linear-gradient(90deg, rgba(99,102,241,0.06) 0%, rgba(168,85,247,0.16) 50%, rgba(99,102,241,0.06) 100%);
         background-size: 200% 100%;
         border-radius: 10px;
         animation: shimmer 1.4s ease-in-out infinite;
