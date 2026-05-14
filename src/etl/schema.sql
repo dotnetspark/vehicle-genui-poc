@@ -189,7 +189,10 @@ ETL time, not stored as zero.$$;
 CREATE OR REPLACE VIEW v_schema_summary AS
 SELECT
     'dim_vehicle'        AS object,
-    (SELECT COUNT(*)::INT FROM dim_vehicle)        AS row_count,
+    -- Use pg_class.reltuples (planner estimate from ANALYZE) instead of
+    -- COUNT(*) — exact counts on fact_registrations (~19.7M rows) routinely
+    -- exceed the 10s readonly statement_timeout that demo connections set.
+    (SELECT reltuples::BIGINT FROM pg_class WHERE relname = 'dim_vehicle')   AS row_count,
     (SELECT COUNT(DISTINCT body_type) FROM dim_vehicle)::INT AS extra_distinct_a,
     'distinct body_types' AS extra_a_label,
     (SELECT COUNT(DISTINCT fuel) FROM dim_vehicle)::INT      AS extra_distinct_b,
@@ -197,7 +200,7 @@ SELECT
 UNION ALL
 SELECT
     'dim_period',
-    (SELECT COUNT(*)::INT FROM dim_period),
+    (SELECT reltuples::BIGINT FROM pg_class WHERE relname = 'dim_period'),
     (SELECT MIN(year) FROM dim_period)::INT,
     'earliest year',
     (SELECT MAX(year) FROM dim_period)::INT,
@@ -205,7 +208,7 @@ SELECT
 UNION ALL
 SELECT
     'fact_registrations',
-    (SELECT COUNT(*)::INT FROM fact_registrations),
+    (SELECT reltuples::BIGINT FROM pg_class WHERE relname = 'fact_registrations'),
     (SELECT COUNT(DISTINCT licence_status) FROM fact_registrations)::INT,
     'distinct licence_status',
     NULL,

@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "vehicle-genui-demo-a": {
-      "command": "npx",
+      "command": "npx.cmd",
       "args": ["mcp-remote", "http://localhost:3001/mcp"]
     }
   }

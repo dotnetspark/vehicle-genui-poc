@@ -1,0 +1,6 @@
+packages:
+  - frontend
+  - runtime
+allowBuilds:
+  '@scarf/scarf': true
+  esbuild: true

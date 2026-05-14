@@ -9,6 +9,132 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Demo A — schema cheatsheet auto-embedded in MCP `instructions`.** The server
+  now reads every public table/view + column + `COMMENT ON` doc string at boot
+  and appends a Markdown cheatsheet to the `instructions` field. The cheatsheet
+  is placed at the **top** of `instructions` behind a hard
+  `# AUTHORITATIVE SCHEMA` banner that explicitly forbids common wrong guesses
+  (`vehicles`, `makes`, `sales`, `registration_count`, `fuel_type`, …).
+  Eliminates the trial-and-error introspection round-trips where Claude would
+  guess non-existent tables before landing on the real schema. Constitution
+  Article VI is preserved: `COMMENT ON` remains the sole source of truth —
+  the cheatsheet is just a read of those comments.
+- **Demo A — HITL suggestion chips beneath every chart.** A `Try next:` strip of
+  3 contextual quick-prompt pills appears under every rendered chart. Clicking
+  one calls `app.sendMessage()` from `@modelcontextprotocol/ext-apps` with a
+  user-role text message, which Claude treats as a fresh user turn. Suggestions
+  are tailored per chart type and the bar variant references the top-row make
+  by name (e.g. "Show the quarterly trend for TOYOTA").
+- **Demo A — modern light chart theme.** Renderer now uses an indigo / violet /
+  cyan / emerald "AI" palette on a clean white canvas with subtle radial
+  indigo/violet glow, gradient bar fills, area-fill line charts with smooth
+  curves, a 62 %-cutout donut, light slate table surface with uppercase
+  indigo-700 headers, and Inter typography throughout.
+
+### Fixed
+
+- **Demo A — Claude Desktop cached old chart UI by URI.** Resources are cached
+  by URI; rebuilds with the same `ui://vehicle/chart-renderer/mcp-app.html`
+  URI did not refetch in Claude Desktop. Bumped the URI through `v2`, `v3`,
+  `v4` as new builds shipped to bust the cache. Long-term, version the URI on
+  every UI release.
+- **Demo A — aggregated queries silently fell back to TABLE.** `node-postgres`
+  returns Postgres `BIGINT` (and any aggregate over `BIGINT` such as
+  `SUM(count)` or `COUNT(*)`) as JavaScript **strings** to preserve precision.
+  The chart-renderer's `countKey` heuristic required `typeof v === "number"`
+  and so picked TABLE for every aggregated query. Added a `toNumber()` helper
+  that coerces numeric strings, applied across all four renderers.
+- **ETL — `v_schema_summary` exceeded `statement_timeout`.** The view did
+  `COUNT(*) FROM fact_registrations` against ~19.6 M rows, blowing the 10 s
+  timeout on the `vehicles_readonly` role. Switched to
+  `pg_class.reltuples::BIGINT` (planner row estimate from `ANALYZE`) which
+  returns instantly. Acceptable for a "schema summary" view; the comment on
+  the view explains the trade-off.
+
+- **Demo A — `Already connected to a transport` regression**
+  (`src/demo-a-mcp-apps/server.ts`). The module-level `McpServer` singleton
+  could only be connected to one `StreamableHTTPServerTransport`; every
+  `/mcp` POST after the first 500ed silently. This caused two visible
+  symptoms in Claude Desktop: the iframe showing "There was a problem
+  displaying content from vehicle-genui-demo-a" (the `resources/read`
+  follow-up failed) and a flood of repeated tool calls (the LLM retrying
+  failed requests). Refactored to a `buildServer()` factory invoked per
+  request — fresh `McpServer` + transport per POST, matching the canonical
+  stateless StreamableHTTP pattern. Verified locally: 3 sequential POSTs
+  all return 200.
+
+### Changed
+
+- **Demo A documentation — Claude Desktop wiring on Windows**
+  (`src/demo-a-mcp-apps/README.md`, `src/demo-a-mcp-apps/claude-desktop-config.json`):
+  - Added "Install `mcp-remote` globally" step (`npm install -g mcp-remote`)
+    to avoid Claude Desktop's 60-second initialisation timeout on the
+    first `npx` cold-download.
+  - Documented the Microsoft Store / MSIX build's sandboxed config path
+    (`%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\…`);
+    the plain `%APPDATA%` location is silently ignored by that build.
+  - Updated the `command` field from `npx` to `npx.cmd` — Claude Desktop
+    spawns commands directly without a shell on Windows, so the `.cmd`
+    extension is required.
+  - Expanded troubleshooting with the "Could not attach to MCP server"
+    diagnosis (cold `npx` exceeded init budget) and the MSIX log path.
+
+- **Demo A + Demo B loading state — visual skeletons**:
+  - Demo A `mcp-app.html` now shows an inline-CSS shimmer skeleton inside
+    the iframe immediately on render (cleared by the existing `clearRoot()`
+    on first `ontoolresult`). Bundled into `dist/mcp-app.html` via
+    `vite-plugin-singlefile`.
+  - Demo B `ChartSkeleton.tsx` replaces the "Loading chart…" text with a
+    bar-chart-shaped placeholder (5 pulsing bars + title bars) while the
+    `useCopilotAction` tool call is streaming.
+
+- **Demo B — Static GenUI tool registration fix**
+  (`src/demo-b-copilotkit/frontend/src/tools/useShow{FuelBreakdown,Trend,TopMakes}.tsx`).
+  The three `useCopilotAction` hooks declared `available: "frontend"`,
+  which routes them to `useRenderToolCall` — render-only, never registered
+  as a callable tool the LLM can invoke. Removed `available: "frontend"`
+  so each hook falls through to `useFrontendTool`. Charts now render in
+  response to the LLM's `show_*` tool calls.
+
+### Added
+
+- **Feature 003 — Demo B (CopilotKit Static AG-UI dashboard)**:
+  - `src/demo-b-copilotkit/` pnpm workspace with two packages:
+    - `frontend/` — Vite 7 + React 19 + Tailwind v4 + Recharts 3 dashboard
+      with a `<CopilotKit>` provider, a 12-column grid, three Generative-UI
+      panels (`FuelBreakdownChart` donut, `TrendChart` line/multi-series,
+      `TopMakesTable` horizontal bar), a `<CopilotPopup>` chat surface, and
+      a chip-bar for the five golden-path queries.
+    - `runtime/` — Express 5 + `@copilotkit/runtime` 1.57 + Anthropic
+      adapter (Claude Sonnet 4.5). Exposes `POST /api/copilotkit` and a
+      `GET /health` probe. Owns a single generic server action
+      `query_vehicles({ sql })` (Constitution Article III v1.1.0) backed by
+      an LRU cache (`max=200`, `ttl=1h`) keyed by trimmed SQL.
+  - **Hardened `vehicles_readonly` Postgres role** (shared with Demo A,
+    `src/demo-a-mcp-apps/setup-readonly-role.sql`):
+    - `default_transaction_read_only = on`, `statement_timeout = 10s`,
+    - allow-list `SELECT` on exactly four relations
+      (`dim_vehicle`, `dim_period`, `fact_registrations`, `v_schema_summary`)
+      — no blanket `GRANT ALL`, so future tables are not auto-exposed.
+  - **Startup role-hardening verifier** (`runtime/src/verify-role.ts`):
+    fails the runtime process at boot unless all three guarantees hold.
+  - **Shared system prompt** moved from `src/demo-a-mcp-apps/system-prompt.md`
+    to `src/shared/system-prompt.md` (Constitution Article II — sharing
+    only via `src/shared/` or the database). Demo B prepends a small header
+    describing its three frontend tools (`show_fuel_breakdown`, `show_trend`,
+    `show_top_makes`) and consumes the rest byte-for-byte via Vite `?raw`.
+  - Three `useCopilotAction` registrations in `frontend/src/tools/` render
+    `<ChartSkeleton />` while the tool call is streaming and the matching
+    chart component on completion. Each writes to a tiny
+    `useSyncExternalStore`-backed panel store with replace-by-id semantics
+    (no panel stacking).
+  - `src/demo-b-copilotkit/README.md` documents the two-process model,
+    required env vars (`ANTHROPIC_API_KEY`, `DATABASE_URL`,
+    `VITE_COPILOT_RUNTIME_URL`), and the manual Phase 7 verification
+    checklist (the five golden-path queries).
+
+### Added
+
 - **Feature 002 — Phase 6 verification (v0.2.0 milestone gate)**:
   - Five golden-path queries executed end-to-end in **Claude for Windows v1.6608**
     (UWP / Microsoft Store build) via a `cloudflared` quick tunnel exposing the

@@ -38,15 +38,37 @@ flowchart LR
   via `vite-plugin-singlefile`; column-shape ladder picks line / bar / donut /
   table renderer.
 - Five golden-path queries verified end-to-end in Claude for Windows v1.6608
-  (UWP build) over a `cloudflared` quick tunnel (the new Claude does not load
-  `claude_desktop_config.json` — Connectors-only).
+  (UWP / MSIX build) over a `cloudflared` quick tunnel. The MSIX build
+  **does** load `claude_desktop_config.json`, but at a sandboxed path
+  (`%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\…`)
+  — see `src/demo-a-mcp-apps/README.md` for the full wiring steps.
 - Spec prompt: [specs/prompt-03-feature-002-demo-a.md](../specs/prompt-03-feature-002-demo-a.md).
 
-## v0.3.0 — Feature 003: Demo B (CopilotKit)
+## v0.3.0 — Feature 003: Demo B (CopilotKit) ✅
 
-- Vite 6 + React 19 + TypeScript 5.8 + Tailwind v4 + Recharts 2.15.
-- CopilotKit Static AG-UI surfacing the same data.
-- Spec prompt: [specs/prompt-04-feature-003-demo-b.md](../specs/prompt-04-feature-003-demo-b.md).
+- pnpm workspace `src/demo-b-copilotkit/` with two packages:
+  - **runtime/** — Express 5 + `@copilotkit/runtime` 1.57 + Anthropic
+    adapter (Claude Sonnet 4.5). Generic `query_vehicles({ sql })` server
+    action (Constitution Article III v1.1.0) backed by `lru-cache`
+    (`max=200`, `ttl=1h`). Startup verifier asserts the
+    `vehicles_readonly` role is hardened (`read_only=on`,
+    `statement_timeout=10s`, allow-listed `SELECT` grants).
+  - **frontend/** — Vite 7 + React 19 + Tailwind v4 + Recharts 3 dashboard
+    with a `<CopilotKit>` provider, three Generative-UI panels
+    (donut / line / horizontal bar), a `<CopilotPopup>` chat surface,
+    and chips for the five golden-path queries.
+- Shared system prompt at `src/shared/system-prompt.md` (single source of
+  truth; both demos consume it — Demo A pastes it into Claude Desktop,
+  Demo B loads it via Vite `?raw`).
+- E2E verification (the five golden-path queries in chat) is gated on the
+  user supplying `ANTHROPIC_API_KEY` — see
+  `src/demo-b-copilotkit/README.md` for the manual checklist before
+  tagging `v0.3.0`.
+- Spec: [specs/feat-003-demo-b-copilotkit/](../specs/feat-003-demo-b-copilotkit/).
+  (The original sequential prompt
+  [specs/prompt-04-feature-003-demo-b.md](../specs/prompt-04-feature-003-demo-b.md)
+  is **superseded** by the spec — it predates Constitution v1.1.0 and
+  recommended `mcp-postgres`, which is no longer used.)
 
 ## v1.0.0 — Feature 004: Comparison + polish
 
