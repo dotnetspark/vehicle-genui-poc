@@ -70,10 +70,18 @@ flowchart LR
   is **superseded** by the spec — it predates Constitution v1.1.0 and
   recommended `mcp-postgres`, which is no longer used.)
 
-## v1.0.0 — Feature 004: Comparison + polish
+## v1.0.0 — Feature 004: Comparison + polish ✅
 
-- Golden-path question set frozen.
-- `docs/COMPARISON.md` published with scoring across the seven axes in
-  [docs/PRD.md](PRD.md) §5.
+- Golden-path question set frozen (the same five questions in
+  `README.md` § "Demo Script" and in both demo READMEs).
+- `docs/COMPARISON.md` published with all six required sections, scoring
+  both demos against the seven axes in [docs/PRD.md](PRD.md) §5.
+- `README.md` carries a `## Demo Script` section so a reader can
+  reproduce both demos side-by-side from a clean clone in ~15 minutes.
+- All milestone tags published on `origin`: `v0.0.1`, `v0.1.0`,
+  `v0.2.0`, `v0.3.0`, `v1.0.0`.
 - Repository ready for community release.
-- Spec prompt: [specs/prompt-05-feature-004-comparison.md](../specs/prompt-05-feature-004-comparison.md).
+- Spec: [specs/feat-004-comparison-and-polish/](../specs/feat-004-comparison-and-polish/).
+  (The original sequential prompt
+  [specs/prompt-05-feature-004-comparison.md](../specs/prompt-05-feature-004-comparison.md)
+  remains as the historical brief.)
