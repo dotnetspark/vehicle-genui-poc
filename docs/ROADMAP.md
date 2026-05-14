@@ -38,8 +38,10 @@ flowchart LR
   via `vite-plugin-singlefile`; column-shape ladder picks line / bar / donut /
   table renderer.
 - Five golden-path queries verified end-to-end in Claude for Windows v1.6608
-  (UWP build) over a `cloudflared` quick tunnel (the new Claude does not load
-  `claude_desktop_config.json` — Connectors-only).
+  (UWP / MSIX build) over a `cloudflared` quick tunnel. The MSIX build
+  **does** load `claude_desktop_config.json`, but at a sandboxed path
+  (`%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\…`)
+  — see `src/demo-a-mcp-apps/README.md` for the full wiring steps.
 - Spec prompt: [specs/prompt-03-feature-002-demo-a.md](../specs/prompt-03-feature-002-demo-a.md).
 
 ## v0.3.0 — Feature 003: Demo B (CopilotKit) 🚧 ready for verification

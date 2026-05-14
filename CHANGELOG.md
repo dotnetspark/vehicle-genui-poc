@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Demo A — `Already connected to a transport` regression**
+  (`src/demo-a-mcp-apps/server.ts`). The module-level `McpServer` singleton
+  could only be connected to one `StreamableHTTPServerTransport`; every
+  `/mcp` POST after the first 500ed silently. This caused two visible
+  symptoms in Claude Desktop: the iframe showing "There was a problem
+  displaying content from vehicle-genui-demo-a" (the `resources/read`
+  follow-up failed) and a flood of repeated tool calls (the LLM retrying
+  failed requests). Refactored to a `buildServer()` factory invoked per
+  request — fresh `McpServer` + transport per POST, matching the canonical
+  stateless StreamableHTTP pattern. Verified locally: 3 sequential POSTs
+  all return 200.
+
+### Changed
+
+- **Demo A documentation — Claude Desktop wiring on Windows**
+  (`src/demo-a-mcp-apps/README.md`, `src/demo-a-mcp-apps/claude-desktop-config.json`):
+  - Added "Install `mcp-remote` globally" step (`npm install -g mcp-remote`)
+    to avoid Claude Desktop's 60-second initialisation timeout on the
+    first `npx` cold-download.
+  - Documented the Microsoft Store / MSIX build's sandboxed config path
+    (`%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\…`);
+    the plain `%APPDATA%` location is silently ignored by that build.
+  - Updated the `command` field from `npx` to `npx.cmd` — Claude Desktop
+    spawns commands directly without a shell on Windows, so the `.cmd`
+    extension is required.
+  - Expanded troubleshooting with the "Could not attach to MCP server"
+    diagnosis (cold `npx` exceeded init budget) and the MSIX log path.
+
+- **Demo A + Demo B loading state — visual skeletons**:
+  - Demo A `mcp-app.html` now shows an inline-CSS shimmer skeleton inside
+    the iframe immediately on render (cleared by the existing `clearRoot()`
+    on first `ontoolresult`). Bundled into `dist/mcp-app.html` via
+    `vite-plugin-singlefile`.
+  - Demo B `ChartSkeleton.tsx` replaces the "Loading chart…" text with a
+    bar-chart-shaped placeholder (5 pulsing bars + title bars) while the
+    `useCopilotAction` tool call is streaming.
+
+- **Demo B — Static GenUI tool registration fix**
+  (`src/demo-b-copilotkit/frontend/src/tools/useShow{FuelBreakdown,Trend,TopMakes}.tsx`).
+  The three `useCopilotAction` hooks declared `available: "frontend"`,
+  which routes them to `useRenderToolCall` — render-only, never registered
+  as a callable tool the LLM can invoke. Removed `available: "frontend"`
+  so each hook falls through to `useFrontendTool`. Charts now render in
+  response to the LLM's `show_*` tool calls.
+
 ### Added
 
 - **Feature 003 — Demo B (CopilotKit Static AG-UI dashboard)**:
