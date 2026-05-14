@@ -25,15 +25,27 @@ const PORT = 3001;
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL_READONLY });
 
+// Load the shared schema-first system prompt at boot. Surfacing it via the
+// MCP `instructions` field means clients (Claude Desktop, Inspector, etc.)
+// receive it automatically on `initialize` and prepend it to the conversation
+// — no manual "paste into Custom Instructions" step required.
+const SYSTEM_INSTRUCTIONS = await fs.readFile(
+  path.join(import.meta.dirname, "..", "shared", "system-prompt.md"),
+  "utf8"
+);
+
 // Build a fresh McpServer per request — required by the stateless StreamableHTTP
 // pattern (sessionIdGenerator: undefined). A shared McpServer cannot be connected
 // to multiple transports concurrently and would throw "Already connected to a
 // transport" on the 2nd request, silently 500ing every subsequent tool call.
 function buildServer(): McpServer {
-  const server = new McpServer({
-    name: "Vehicle GenUI Demo A",
-    version: "0.2.0",
-  });
+  const server = new McpServer(
+    {
+      name: "Vehicle GenUI Demo A",
+      version: "0.2.0",
+    },
+    { instructions: SYSTEM_INSTRUCTIONS }
+  );
 
   // Task 2.3 — Generic SQL-execution tool (Constitution Article III v1.1.0).
   // The LLM supplies raw SQL; this tool runs it and returns rows. No NL→SQL,

@@ -218,7 +218,17 @@ def main() -> int:
                     flush=True,
                 )
 
-                # 5. Final counts
+                # 5. ANALYZE — populate planner stats so introspection queries
+                # (e.g. pg_stat_user_tables.n_live_tup) report real row counts.
+                # Without this an LLM that sniffs cardinality before querying
+                # will see 0 live tuples and conclude the tables are empty.
+                t = time.monotonic()
+                cur.execute("ANALYZE dim_vehicle")
+                cur.execute("ANALYZE dim_period")
+                cur.execute("ANALYZE fact_registrations")
+                print(f"ANALYZE: {time.monotonic() - t:.1f}s", flush=True)
+
+                # 6. Final counts
                 cur.execute("SELECT COUNT(*) FROM dim_vehicle")
                 v_count = cur.fetchone()[0]
                 cur.execute("SELECT COUNT(*) FROM dim_period")
