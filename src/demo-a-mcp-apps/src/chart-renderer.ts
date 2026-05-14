@@ -415,6 +415,21 @@ function renderTable(rows: Record<string, unknown>[]): void {
 }
 
 // ---------------------------------------------------------------------------
+// Host bridge — lets the renderer push follow-up user prompts into the chat
+// (powers the suggestion chips below each chart). Wired in mcp-app.ts.
+// ---------------------------------------------------------------------------
+
+interface HostBridge {
+  sendUserPrompt: (text: string) => Promise<void>;
+}
+
+let hostBridge: HostBridge | null = null;
+
+export function setHostBridge(bridge: HostBridge): void {
+  hostBridge = bridge;
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -439,4 +454,98 @@ export function renderFromRows(rows: unknown[]): void {
     default:
       renderTable(typed);
   }
+
+  renderSuggestions(type, typed);
+}
+
+// ---------------------------------------------------------------------------
+// Suggestion chips — quick follow-up prompts under each chart. Clicking one
+// calls app.sendMessage() (via the host bridge) so the LLM picks it up as a
+// new user turn and renders a fresh chart.
+// ---------------------------------------------------------------------------
+
+function suggestionsFor(type: ChartType, rows: Record<string, unknown>[]): string[] {
+  if (!rows.length) return [];
+
+  switch (type) {
+    case "line":
+      return [
+        "Compare petrol vs diesel registrations over the same period",
+        "Show the same trend grouped by body type",
+        "Top 5 makes for the most recent quarter",
+      ];
+    case "bar": {
+      const top = String(rows[0]?.["make"] ?? "").trim();
+      return [
+        top ? `Show the quarterly registration trend for ${top}` : "Show the quarterly registration trend for the leader",
+        "Break down the top make by fuel type",
+        "Compare the top 3 makes' EV share",
+      ];
+    }
+    case "donut":
+      return [
+        "Show this fuel mix as a quarterly trend",
+        "Limit to electric vehicles by make",
+        "Compare 2024 vs 2019 fuel mix",
+      ];
+    default:
+      return [
+        "Top 10 makes by licensed registrations",
+        "Fuel mix for the most recent year",
+        "Quarterly trend of EV registrations",
+      ];
+  }
+}
+
+function renderSuggestions(type: ChartType, rows: Record<string, unknown>[]): void {
+  const items = suggestionsFor(type, rows);
+  if (!items.length || !hostBridge) return;
+
+  const root = getRoot();
+  const wrap = document.createElement("div");
+  wrap.style.cssText =
+    "margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;" +
+    "font-family:Inter,system-ui,-apple-system,sans-serif";
+
+  const label = document.createElement("span");
+  label.textContent = "Try next:";
+  label.style.cssText =
+    "font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;" +
+    "color:#64748b;font-weight:600;margin-right:4px";
+  wrap.appendChild(label);
+
+  for (const text of items) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = text;
+    btn.style.cssText =
+      "padding:6px 12px;border-radius:999px;border:1px solid rgba(99,102,241,0.25);" +
+      "background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(168,85,247,0.10));" +
+      "color:#3730a3;font-size:0.8rem;font-weight:500;cursor:pointer;" +
+      "font-family:inherit;transition:all 120ms ease";
+    btn.addEventListener("mouseenter", () => {
+      btn.style.background = "linear-gradient(135deg,rgba(99,102,241,0.18),rgba(168,85,247,0.20))";
+      btn.style.borderColor = "rgba(99,102,241,0.45)";
+    });
+    btn.addEventListener("mouseleave", () => {
+      btn.style.background = "linear-gradient(135deg,rgba(99,102,241,0.08),rgba(168,85,247,0.10))";
+      btn.style.borderColor = "rgba(99,102,241,0.25)";
+    });
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      btn.style.opacity = "0.6";
+      btn.style.cursor = "wait";
+      try {
+        await hostBridge?.sendUserPrompt(text);
+      } catch (err) {
+        console.error("[chart-renderer] suggestion send failed:", err);
+        btn.disabled = false;
+        btn.style.opacity = "";
+        btn.style.cursor = "pointer";
+      }
+    });
+    wrap.appendChild(btn);
+  }
+
+  root.appendChild(wrap);
 }

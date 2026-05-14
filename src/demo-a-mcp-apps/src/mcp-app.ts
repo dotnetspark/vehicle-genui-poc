@@ -6,9 +6,24 @@
 // no "/iframe" subpath exists in v1.6.x; see dallas-structured-content-shape.md).
 
 import { App } from "@modelcontextprotocol/ext-apps";
-import { renderFromRows } from "./chart-renderer.js";
+import { renderFromRows, setHostBridge } from "./chart-renderer.js";
 
 const app = new App({ name: "Vehicle GenUI Demo A", version: "0.2.0" });
+
+// Hand the chart renderer a callback it can use to push follow-up user
+// prompts back into the chat (powers the suggestion chips below each chart).
+setHostBridge({
+  sendUserPrompt: async (text: string) => {
+    try {
+      await app.sendMessage({
+        role: "user",
+        content: [{ type: "text", text }],
+      });
+    } catch (err) {
+      console.error("[mcp-app] sendMessage failed:", err);
+    }
+  },
+});
 
 // ontoolresult receives CallToolResult directly (params of McpUiToolResultNotification).
 // The server wraps rows in { rows: [...] }, so we extract from structuredContent.rows.

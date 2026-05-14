@@ -99,7 +99,20 @@ async function buildSchemaCheatsheet(): Promise<string> {
 }
 
 const cheatsheet = await buildSchemaCheatsheet();
-const SYSTEM_INSTRUCTIONS = `${STATIC_PROMPT}\n\n---\n\n${cheatsheet}\n`;
+// Schema cheatsheet goes FIRST — LLMs weight the start of system prompts more
+// heavily, and Claude was still guessing `vehicles`/`makes`/`registration_count`
+// even after the cheatsheet was appended at the end. The static prompt
+// (rendering contract, SQL constraints, rules) follows.
+const SCHEMA_BANNER = `# AUTHORITATIVE SCHEMA — read this BEFORE writing any SQL
+
+The PostgreSQL database has **exactly three tables and one view**, listed below.
+Use these names verbatim. **Never** invent tables or columns. Common wrong
+guesses that DO NOT EXIST: \`vehicles\`, \`makes\`, \`models\`, \`sales\`,
+\`registrations\`, \`registration_count\`, \`fuel_type\`, \`vehicle_type\`,
+\`make_name\`. The real names are listed in the cheatsheet immediately below.
+
+`;
+const SYSTEM_INSTRUCTIONS = `${SCHEMA_BANNER}${cheatsheet}\n\n---\n\n${STATIC_PROMPT}`;
 console.log(
   `Schema cheatsheet built (${cheatsheet.length} chars); total instructions: ${SYSTEM_INSTRUCTIONS.length} chars.`
 );
@@ -131,7 +144,7 @@ function buildServer(): McpServer {
       inputSchema: {
         sql: z.string().describe("A raw SQL query to execute against the vehicles database"),
       },
-      _meta: { ui: { resourceUri: "ui://vehicle/chart-renderer/mcp-app.v3.html" } },
+      _meta: { ui: { resourceUri: "ui://vehicle/chart-renderer/mcp-app.v4.html" } },
     },
     async ({ sql }) => {
       try {
@@ -177,7 +190,7 @@ function buildServer(): McpServer {
   registerAppResource(
     server,
     "Vehicle chart renderer",
-    "ui://vehicle/chart-renderer/mcp-app.v3.html",
+    "ui://vehicle/chart-renderer/mcp-app.v4.html",
     { mimeType: RESOURCE_MIME_TYPE },
     async () => {
       const htmlPath = path.join(import.meta.dirname, "dist", "mcp-app.html");
@@ -186,7 +199,7 @@ function buildServer(): McpServer {
         return {
           contents: [
             {
-              uri: "ui://vehicle/chart-renderer/mcp-app.v3.html",
+              uri: "ui://vehicle/chart-renderer/mcp-app.v4.html",
               mimeType: RESOURCE_MIME_TYPE,
               text,
             },
