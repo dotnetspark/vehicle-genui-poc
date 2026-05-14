@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-05-14
+
+### Added
+
+- **Feature 004 — `docs/COMPARISON.md` (the headline deliverable).** A
+  six-section, evidence-backed comparison of the two demos:
+  (1) what you had to build (file inventory + line counts per category),
+  (2) control-model table across seven concerns,
+  (3) developer-experience notes (objective fixes captured from the
+      v0.2.0–v0.3.0 history; subjective subsections marked
+      `[FILL IN: human observations]`),
+  (4) overlap analysis with a Mermaid diagram showing the database +
+      shared system prompt as the only shared surfaces,
+  (5) "when to use which" with concrete scenarios per demo,
+  (6) a 200-word community recommendation framing the two as answers to
+      different questions, not competitors.
+- **README — `## Demo Script` section.** Step-by-step walkthrough for
+  showing both demos to an audience: prerequisites, four timed steps,
+  per-question talking points reusing the golden-path query set,
+  troubleshooting cheatsheet for the failure modes most likely to
+  surface during a live demo.
+- **README architecture diagram refreshed** to match the as-shipped
+  v0.3.0 stack (no more `mcp-postgres`, no more `FastMCP`; Demo B's two
+  processes now drawn explicitly).
+
+### Changed
+
+- **README "Demos" table** — both demos now marked ✅ with their shipped
+  versions instead of "in progress" / "planned".
+- **`docs/ROADMAP.md`** — v1.0.0 milestone marked ✅; comparison
+  document, demo script, and tag verification all checked off.
+
+### Notes
+
+- Section 3 of `docs/COMPARISON.md` contains `[FILL IN: human
+  observations]` markers in the two subsections that require lived
+  author experience (rough time spent, what surprised you). All
+  objective subsections are filled.
+- No `src/` changes. This release is documentation + release bookkeeping
+  only.
+
+## [0.3.0] — 2026-05-14
+
 ### Added
 
 - **Demo A — schema cheatsheet auto-embedded in MCP `instructions`.** The server
