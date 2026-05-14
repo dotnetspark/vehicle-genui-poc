@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Demo A — schema cheatsheet auto-embedded in MCP `instructions`.** The server
+  now reads every public table/view + column + `COMMENT ON` doc string at boot
+  and appends a Markdown cheatsheet to the `instructions` field. Eliminates the
+  trial-and-error introspection round-trips where Claude would guess
+  non-existent tables (`vehicles`, `makes`, `sales`) or columns
+  (`registration_count`, `fuel_type`) before landing on the real schema.
+  Constitution Article VI is preserved: `COMMENT ON` remains the sole source
+  of truth — the cheatsheet is just a read of those comments.
+- **Demo A — modern dark chart theme.** Renderer now uses an indigo / violet /
+  cyan / emerald "AI" palette on a deep-navy canvas, with gradient bar fills,
+  area-fill line charts with smooth curves, a 62 %-cutout donut, dark table
+  surface with uppercase indigo headers, and Inter typography throughout.
+
+### Fixed
+
+- **Demo A — aggregated queries silently fell back to TABLE.** `node-postgres`
+  returns Postgres `BIGINT` (and any aggregate over `BIGINT` such as
+  `SUM(count)` or `COUNT(*)`) as JavaScript **strings** to preserve precision.
+  The chart-renderer's `countKey` heuristic required `typeof v === "number"`
+  and so picked TABLE for every aggregated query. Added a `toNumber()` helper
+  that coerces numeric strings, applied across all four renderers.
+- **ETL — `v_schema_summary` exceeded `statement_timeout`.** The view did
+  `COUNT(*) FROM fact_registrations` against ~19.6 M rows, blowing the 10 s
+  timeout on the `vehicles_readonly` role. Switched to
+  `pg_class.reltuples::BIGINT` (planner row estimate from `ANALYZE`) which
+  returns instantly. Acceptable for a "schema summary" view; the comment on
+  the view explains the trade-off.
+
 ### Fixed
 
 - **Demo A — `Already connected to a transport` regression**

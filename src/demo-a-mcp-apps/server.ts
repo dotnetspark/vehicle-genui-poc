@@ -29,9 +29,79 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL_READONLY });
 // MCP `instructions` field means clients (Claude Desktop, Inspector, etc.)
 // receive it automatically on `initialize` and prepend it to the conversation
 // — no manual "paste into Custom Instructions" step required.
-const SYSTEM_INSTRUCTIONS = await fs.readFile(
+const STATIC_PROMPT = await fs.readFile(
   path.join(import.meta.dirname, "..", "shared", "system-prompt.md"),
   "utf8"
+);
+
+/**
+ * Read every public table + column + COMMENT ON at boot and format a compact
+ * Markdown cheatsheet. Without this the LLM still has to introspect via
+ * pg_catalog before writing any SQL — and it routinely guesses non-existent
+ * tables (vehicles, makes, sales, …) or columns (registration_count, fuel_type)
+ * before getting around to introspection.
+ *
+ * Constitution Article VI is preserved: schema documentation lives ONLY in
+ * Postgres COMMENT ON statements. This function just reads those comments and
+ * surfaces them through the MCP `instructions` channel — no hand-written
+ * schema docs in TypeScript, no NL→SQL helpers.
+ */
+async function buildSchemaCheatsheet(): Promise<string> {
+  const tablesRes = await pool.query<{ relname: string; doc: string | null }>(
+    `SELECT c.relname, obj_description(c.oid, 'pg_class') AS doc
+       FROM pg_class c
+       JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public'
+        AND c.relkind IN ('r', 'v')
+      ORDER BY c.relkind DESC, c.relname`
+  );
+
+  const sections: string[] = [];
+  for (const t of tablesRes.rows) {
+    const colsRes = await pool.query<{
+      attname: string;
+      data_type: string;
+      doc: string | null;
+    }>(
+      `SELECT a.attname,
+              format_type(a.atttypid, a.atttypmod) AS data_type,
+              col_description(a.attrelid, a.attnum) AS doc
+         FROM pg_attribute a
+         JOIN pg_class     c ON c.oid = a.attrelid
+         JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public'
+          AND c.relname = $1
+          AND a.attnum > 0
+          AND NOT a.attisdropped
+        ORDER BY a.attnum`,
+      [t.relname]
+    );
+
+    const lines: string[] = [`### \`${t.relname}\``];
+    if (t.doc) lines.push(t.doc.trim(), "");
+    lines.push("| column | type | doc |", "|---|---|---|");
+    for (const col of colsRes.rows) {
+      const doc = (col.doc ?? "").replace(/\n/g, " ").trim();
+      lines.push(`| \`${col.attname}\` | \`${col.data_type}\` | ${doc} |`);
+    }
+    sections.push(lines.join("\n"));
+  }
+
+  return [
+    "## Schema cheatsheet (auto-generated from `COMMENT ON` at server boot)",
+    "",
+    "These are the **only** tables and columns. Use them verbatim — do not invent",
+    "alternative names like `vehicles`, `makes`, `sales`, `registration_count`,",
+    "`fuel_type`, etc. Read the column docs before composing analytical SQL.",
+    "",
+    sections.join("\n\n"),
+  ].join("\n");
+}
+
+const cheatsheet = await buildSchemaCheatsheet();
+const SYSTEM_INSTRUCTIONS = `${STATIC_PROMPT}\n\n---\n\n${cheatsheet}\n`;
+console.log(
+  `Schema cheatsheet built (${cheatsheet.length} chars); total instructions: ${SYSTEM_INSTRUCTIONS.length} chars.`
 );
 
 // Build a fresh McpServer per request — required by the stateless StreamableHTTP

@@ -43,10 +43,66 @@ const COUNT_LIKE = /(count|total|reg|licensed|sorn|sum)/i;
 function countKey(row: Record<string, unknown>): string | undefined {
   return Object.keys(row).find((k) => {
     if (!COUNT_LIKE.test(k)) return false;
-    const v = row[k];
-    return typeof v === "number" && Number.isFinite(v);
+    return toNumber(row[k]) !== null;
   });
 }
+
+/**
+ * Coerce a value to a finite number. Accepts JS numbers and numeric strings —
+ * node-postgres returns Postgres BIGINT (and any aggregate over BIGINT, e.g.
+ * COUNT(*) and SUM(count)) as strings to preserve precision. Without this
+ * coercion the chart-renderer silently falls back to a plain table for every
+ * aggregated query.
+ */
+function toNumber(v: unknown): number | null {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string" && v.length > 0) {
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Modern AI-style theme — applied globally + per chart.
+// Palette: indigo / violet / cyan / emerald gradients on a near-black canvas.
+// ---------------------------------------------------------------------------
+
+const THEME = {
+  bg: "#0b0f1a",            // deep navy near-black
+  surface: "#111827",        // panel
+  fg: "#e5e7eb",             // primary text
+  muted: "#94a3b8",          // axis labels
+  grid: "rgba(148,163,184,0.12)",
+  // Categorical palette — indigo, violet, cyan, emerald, amber, rose, sky, lime.
+  // Designed to read on a dark canvas; rotate through for multi-series charts.
+  series: [
+    "#6366f1", "#a855f7", "#06b6d4", "#10b981",
+    "#f59e0b", "#f43f5e", "#0ea5e9", "#84cc16",
+  ],
+};
+
+// Chart.js global defaults — typography, colours, grid lines.
+Chart.defaults.color = THEME.muted;
+Chart.defaults.font.family =
+  "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.borderColor = THEME.grid;
+Chart.defaults.plugins.tooltip = {
+  ...(Chart.defaults.plugins.tooltip ?? {}),
+  backgroundColor: "rgba(15,23,42,0.95)",
+  borderColor: "rgba(99,102,241,0.4)",
+  borderWidth: 1,
+  titleColor: "#f8fafc",
+  bodyColor: "#e2e8f0",
+  padding: 10,
+  cornerRadius: 8,
+  displayColors: true,
+};
+Chart.defaults.plugins.legend = {
+  ...(Chart.defaults.plugins.legend ?? {}),
+  labels: { color: THEME.fg, padding: 14, font: { size: 12 } },
+};
 
 /** Resolve fuel name to a brand colour (case-insensitive contains-match). */
 function fuelColour(fuel: string): string {
@@ -56,11 +112,41 @@ function fuelColour(fuel: string): string {
     u === "FUEL CELL ELECTRIC" ||
     u === "RANGE EXTENDED ELECTRIC"
   )
-    return "#16a34a";
-  if (u.includes("HYBRID")) return "#2563eb";
-  if (u === "PETROL" || u === "DIESEL") return "#6b7280";
-  if (u.includes("GAS")) return "#f59e0b";
-  return "#d1d5db";
+    return "#10b981"; // emerald — clean energy
+  if (u.includes("PLUG-IN HYBRID")) return "#8b5cf6"; // violet
+  if (u.includes("HYBRID")) return "#06b6d4"; // cyan
+  if (u === "PETROL") return "#f59e0b"; // amber
+  if (u === "DIESEL") return "#64748b"; // slate
+  if (u.includes("GAS")) return "#f43f5e"; // rose
+  return "#475569";
+}
+
+/** Build a vertical canvas gradient (top → bottom) for an area / bar fill. */
+function makeGradient(
+  ctx: CanvasRenderingContext2D,
+  height: number,
+  topRgba: string,
+  bottomRgba: string
+): CanvasGradient {
+  const g = ctx.createLinearGradient(0, 0, 0, height);
+  g.addColorStop(0, topRgba);
+  g.addColorStop(1, bottomRgba);
+  return g;
+}
+
+/** Convert hex (#rrggbb) → rgba string with the given alpha. */
+function withAlpha(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const n = parseInt(
+    h.length === 3
+      ? h.split("").map((c) => c + c).join("")
+      : h,
+    16
+  );
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 // ---------------------------------------------------------------------------
@@ -135,41 +221,67 @@ function renderLine(rows: Record<string, unknown>[]): void {
       ? String(row["period_label"] ?? "")
       : `${row["year"]} Q${row["quarter"]}`;
 
-  // Identify the "series" dimension (the field that isn't the x-axis or count-like)
   const skipKeys = new Set<string>(["period_label", "year", "quarter"]);
   const ck = countKey(first);
   if (ck) skipKeys.add(ck);
 
   const seriesCandidates = Object.keys(first).filter((k) => !skipKeys.has(k));
-  const seriesKey = seriesCandidates[0]; // may be undefined → single series
+  const seriesKey = seriesCandidates[0];
 
-  // Collect distinct x labels
   const xLabels = [...new Set(capped.map(xLabel))];
-
-  // Collect distinct series values (cap at 8)
   const seriesValues = seriesKey
     ? [...new Set(capped.map((r) => String(r[seriesKey] ?? "")))].slice(0, 8)
     : ["value"];
 
-  const datasets = seriesValues.map((sv) => {
+  const canvas = makeCanvas();
+  getRoot().appendChild(canvas);
+  const ctx = canvas.getContext("2d")!;
+  const isFuelSeries = seriesKey === "fuel";
+
+  const datasets = seriesValues.map((sv, i) => {
     const filtered = seriesKey
       ? capped.filter((r) => String(r[seriesKey] ?? "") === sv)
       : capped;
     const data = xLabels.map((xl) => {
       const row = filtered.find((r) => xLabel(r) === xl);
       if (!row || !ck) return null;
-      const v = row[ck];
-      return typeof v === "number" ? v : null;
+      return toNumber(row[ck]);
     });
-    return { label: sv, data, tension: 0.3, fill: false };
+    const colour = isFuelSeries ? fuelColour(sv) : THEME.series[i % THEME.series.length];
+    const gradient = makeGradient(
+      ctx,
+      canvas.height || 400,
+      withAlpha(colour, seriesValues.length === 1 ? 0.35 : 0.18),
+      withAlpha(colour, 0)
+    );
+    return {
+      label: sv,
+      data,
+      borderColor: colour,
+      backgroundColor: gradient,
+      borderWidth: 2.5,
+      tension: 0.4,
+      fill: seriesValues.length === 1,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      pointHoverBackgroundColor: colour,
+      pointHoverBorderColor: "#0b0f1a",
+      pointHoverBorderWidth: 2,
+    };
   });
 
-  const canvas = makeCanvas();
-  getRoot().appendChild(canvas);
   activeChart = new Chart(canvas, {
     type: "line",
     data: { labels: xLabels, datasets },
-    options: { responsive: true, plugins: { legend: { position: "bottom" } } },
+    options: {
+      responsive: true,
+      interaction: { mode: "index", intersect: false },
+      plugins: { legend: { position: "bottom" } },
+      scales: {
+        x: { grid: { color: THEME.grid }, ticks: { color: THEME.muted } },
+        y: { grid: { color: THEME.grid }, ticks: { color: THEME.muted }, beginAtZero: true },
+      },
+    },
   });
 }
 
@@ -177,23 +289,39 @@ function renderBar(rows: Record<string, unknown>[]): void {
   const capped = rows.slice(0, 50);
   const ck = countKey(capped[0]) ?? "";
   const labels = capped.map((r) => String(r["make"] ?? ""));
-  const data = capped.map((r) => {
-    const v = r[ck];
-    return typeof v === "number" ? v : 0;
-  });
+  const data = capped.map((r) => toNumber(r[ck]) ?? 0);
 
   const canvas = makeCanvas();
   getRoot().appendChild(canvas);
+  const ctx = canvas.getContext("2d")!;
+  // Horizontal gradient: indigo → violet, left → right.
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width || 600, 0);
+  gradient.addColorStop(0, "#6366f1");
+  gradient.addColorStop(1, "#a855f7");
+
   activeChart = new Chart(canvas, {
     type: "bar",
     data: {
       labels,
-      datasets: [{ label: ck, data, backgroundColor: "#2563eb" }],
+      datasets: [
+        {
+          label: ck,
+          data,
+          backgroundColor: gradient,
+          borderRadius: 6,
+          borderSkipped: false,
+          hoverBackgroundColor: "#c084fc",
+        },
+      ],
     },
     options: {
       indexAxis: "y",
       responsive: true,
       plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: THEME.grid }, ticks: { color: THEME.muted }, beginAtZero: true },
+        y: { grid: { display: false }, ticks: { color: THEME.fg } },
+      },
     },
   });
 }
@@ -202,10 +330,7 @@ function renderDonut(rows: Record<string, unknown>[]): void {
   const capped = rows.slice(0, 12);
   const ck = countKey(capped[0]) ?? "";
   const labels = capped.map((r) => String(r["fuel"] ?? ""));
-  const data = capped.map((r) => {
-    const v = r[ck];
-    return typeof v === "number" ? v : 0;
-  });
+  const data = capped.map((r) => toNumber(r[ck]) ?? 0);
   const colours = labels.map(fuelColour);
 
   const canvas = makeCanvas();
@@ -214,11 +339,26 @@ function renderDonut(rows: Record<string, unknown>[]): void {
     type: "doughnut",
     data: {
       labels,
-      datasets: [{ data, backgroundColor: colours }],
+      datasets: [
+        {
+          data,
+          backgroundColor: colours,
+          borderColor: THEME.bg,
+          borderWidth: 2,
+          hoverOffset: 8,
+          hoverBorderColor: THEME.fg,
+        },
+      ],
     },
     options: {
       responsive: true,
-      plugins: { legend: { position: "bottom" } },
+      cutout: "62%",
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { color: THEME.fg, padding: 12, boxWidth: 12, boxHeight: 12 },
+        },
+      },
     },
   });
 }
@@ -228,14 +368,19 @@ function renderTable(rows: Record<string, unknown>[]): void {
   if (!rows.length) {
     const p = document.createElement("p");
     p.textContent = "No data";
+    p.style.cssText = `color:${THEME.muted};font-family:Inter,system-ui,sans-serif;padding:16px`;
     root.appendChild(p);
     return;
   }
 
   const headers = Object.keys(rows[0]);
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "overflow:auto;border-radius:10px;border:1px solid rgba(148,163,184,0.18)";
+
   const table = document.createElement("table");
   table.style.cssText =
-    "border-collapse:collapse;width:100%;font-size:0.85rem;font-family:sans-serif";
+    "border-collapse:separate;border-spacing:0;width:100%;font-size:0.85rem;" +
+    "font-family:Inter,system-ui,-apple-system,sans-serif;color:#e5e7eb;background:#111827";
 
   const thead = document.createElement("thead");
   const hr = document.createElement("tr");
@@ -243,25 +388,29 @@ function renderTable(rows: Record<string, unknown>[]): void {
     const th = document.createElement("th");
     th.textContent = h;
     th.style.cssText =
-      "border:1px solid #d1d5db;padding:4px 8px;background:#f3f4f6;text-align:left";
+      "padding:10px 14px;background:#1e293b;color:#a5b4fc;text-align:left;" +
+      "font-weight:600;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;" +
+      "border-bottom:1px solid rgba(148,163,184,0.18)";
     hr.appendChild(th);
   });
   thead.appendChild(hr);
   table.appendChild(thead);
 
   const tbody = document.createElement("tbody");
-  rows.forEach((row) => {
+  rows.forEach((row, i) => {
     const tr = document.createElement("tr");
+    if (i % 2 === 1) tr.style.background = "rgba(99,102,241,0.04)";
     headers.forEach((h) => {
       const td = document.createElement("td");
       td.textContent = String(row[h] ?? "");
-      td.style.cssText = "border:1px solid #d1d5db;padding:4px 8px";
+      td.style.cssText = "padding:8px 14px;border-bottom:1px solid rgba(148,163,184,0.08)";
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
-  root.appendChild(table);
+  wrap.appendChild(table);
+  root.appendChild(wrap);
 }
 
 // ---------------------------------------------------------------------------
