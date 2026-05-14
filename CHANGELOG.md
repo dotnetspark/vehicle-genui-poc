@@ -11,19 +11,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Demo A — schema cheatsheet auto-embedded in MCP `instructions`.** The server
   now reads every public table/view + column + `COMMENT ON` doc string at boot
-  and appends a Markdown cheatsheet to the `instructions` field. Eliminates the
-  trial-and-error introspection round-trips where Claude would guess
-  non-existent tables (`vehicles`, `makes`, `sales`) or columns
-  (`registration_count`, `fuel_type`) before landing on the real schema.
-  Constitution Article VI is preserved: `COMMENT ON` remains the sole source
-  of truth — the cheatsheet is just a read of those comments.
-- **Demo A — modern dark chart theme.** Renderer now uses an indigo / violet /
-  cyan / emerald "AI" palette on a deep-navy canvas, with gradient bar fills,
-  area-fill line charts with smooth curves, a 62 %-cutout donut, dark table
-  surface with uppercase indigo headers, and Inter typography throughout.
+  and appends a Markdown cheatsheet to the `instructions` field. The cheatsheet
+  is placed at the **top** of `instructions` behind a hard
+  `# AUTHORITATIVE SCHEMA` banner that explicitly forbids common wrong guesses
+  (`vehicles`, `makes`, `sales`, `registration_count`, `fuel_type`, …).
+  Eliminates the trial-and-error introspection round-trips where Claude would
+  guess non-existent tables before landing on the real schema. Constitution
+  Article VI is preserved: `COMMENT ON` remains the sole source of truth —
+  the cheatsheet is just a read of those comments.
+- **Demo A — HITL suggestion chips beneath every chart.** A `Try next:` strip of
+  3 contextual quick-prompt pills appears under every rendered chart. Clicking
+  one calls `app.sendMessage()` from `@modelcontextprotocol/ext-apps` with a
+  user-role text message, which Claude treats as a fresh user turn. Suggestions
+  are tailored per chart type and the bar variant references the top-row make
+  by name (e.g. "Show the quarterly trend for TOYOTA").
+- **Demo A — modern light chart theme.** Renderer now uses an indigo / violet /
+  cyan / emerald "AI" palette on a clean white canvas with subtle radial
+  indigo/violet glow, gradient bar fills, area-fill line charts with smooth
+  curves, a 62 %-cutout donut, light slate table surface with uppercase
+  indigo-700 headers, and Inter typography throughout.
 
 ### Fixed
 
+- **Demo A — Claude Desktop cached old chart UI by URI.** Resources are cached
+  by URI; rebuilds with the same `ui://vehicle/chart-renderer/mcp-app.html`
+  URI did not refetch in Claude Desktop. Bumped the URI through `v2`, `v3`,
+  `v4` as new builds shipped to bust the cache. Long-term, version the URI on
+  every UI release.
 - **Demo A — aggregated queries silently fell back to TABLE.** `node-postgres`
   returns Postgres `BIGINT` (and any aggregate over `BIGINT` such as
   `SUM(count)` or `COUNT(*)`) as JavaScript **strings** to preserve precision.
@@ -36,8 +50,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `pg_class.reltuples::BIGINT` (planner row estimate from `ANALYZE`) which
   returns instantly. Acceptable for a "schema summary" view; the comment on
   the view explains the trade-off.
-
-### Fixed
 
 - **Demo A — `Already connected to a transport` regression**
   (`src/demo-a-mcp-apps/server.ts`). The module-level `McpServer` singleton

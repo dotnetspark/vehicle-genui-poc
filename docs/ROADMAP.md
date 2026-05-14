@@ -44,7 +44,7 @@ flowchart LR
   — see `src/demo-a-mcp-apps/README.md` for the full wiring steps.
 - Spec prompt: [specs/prompt-03-feature-002-demo-a.md](../specs/prompt-03-feature-002-demo-a.md).
 
-## v0.3.0 — Feature 003: Demo B (CopilotKit) 🚧 ready for verification
+## v0.3.0 — Feature 003: Demo B (CopilotKit) ✅
 
 - pnpm workspace `src/demo-b-copilotkit/` with two packages:
   - **runtime/** — Express 5 + `@copilotkit/runtime` 1.57 + Anthropic
