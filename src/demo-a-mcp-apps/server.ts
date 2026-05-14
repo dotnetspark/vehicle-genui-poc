@@ -25,74 +25,82 @@ const PORT = 3001;
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL_READONLY });
 
-const server = new McpServer({
-  name: "Vehicle GenUI Demo A",
-  version: "0.2.0",
-});
+// Build a fresh McpServer per request — required by the stateless StreamableHTTP
+// pattern (sessionIdGenerator: undefined). A shared McpServer cannot be connected
+// to multiple transports concurrently and would throw "Already connected to a
+// transport" on the 2nd request, silently 500ing every subsequent tool call.
+function buildServer(): McpServer {
+  const server = new McpServer({
+    name: "Vehicle GenUI Demo A",
+    version: "0.2.0",
+  });
 
-// Task 2.3 — Generic SQL-execution tool (Constitution Article III v1.1.0).
-// The LLM supplies raw SQL; this tool runs it and returns rows. No NL→SQL,
-// no templates, no intent introspection.
-registerAppTool(
-  server,
-  "query_vehicles",
-  {
-    description:
-      "Run a raw SQL SELECT query against the vehicles PostgreSQL database and return all rows as structured data. " +
-      "The database schema is documented via COMMENT ON statements. " +
-      "Pass the complete SQL string; the tool executes it against the read-only pool and returns the result rows.",
-    inputSchema: {
-      sql: z.string().describe("A raw SQL query to execute against the vehicles database"),
+  // Task 2.3 — Generic SQL-execution tool (Constitution Article III v1.1.0).
+  // The LLM supplies raw SQL; this tool runs it and returns rows. No NL→SQL,
+  // no templates, no intent introspection.
+  registerAppTool(
+    server,
+    "query_vehicles",
+    {
+      description:
+        "Run a raw SQL SELECT query against the vehicles PostgreSQL database and return all rows as structured data. " +
+        "The database schema is documented via COMMENT ON statements. " +
+        "Pass the complete SQL string; the tool executes it against the read-only pool and returns the result rows.",
+      inputSchema: {
+        sql: z.string().describe("A raw SQL query to execute against the vehicles database"),
+      },
+      _meta: { ui: { resourceUri: "ui://vehicle/chart-renderer/mcp-app.html" } },
     },
-    _meta: { ui: { resourceUri: "ui://vehicle/chart-renderer/mcp-app.html" } },
-  },
-  async ({ sql }) => {
-    try {
-      const result = await pool.query(sql);
-      return {
-        content: [
-          { type: "text" as const, text: `Returned ${result.rows.length} rows.` },
-        ],
-        structuredContent: { rows: result.rows },
-        isError: false,
-      };
-    } catch (err) {
-      if (err instanceof DatabaseError) {
+    async ({ sql }) => {
+      try {
+        const result = await pool.query(sql);
         return {
-          isError: true,
-          content: [{ type: "text" as const, text: err.message }],
+          content: [
+            { type: "text" as const, text: `Returned ${result.rows.length} rows.` },
+          ],
+          structuredContent: { rows: result.rows },
+          isError: false,
         };
+      } catch (err) {
+        if (err instanceof DatabaseError) {
+          return {
+            isError: true,
+            content: [{ type: "text" as const, text: err.message }],
+          };
+        }
+        throw err;
       }
-      throw err;
     }
-  }
-);
+  );
 
-// Task 2.4 — Embedded HTML resource for the chart-renderer UI.
-// The handler reads the file at request time so it always serves the latest build.
-registerAppResource(
-  server,
-  "Vehicle chart renderer",
-  "ui://vehicle/chart-renderer/mcp-app.html",
-  { mimeType: RESOURCE_MIME_TYPE },
-  async () => {
-    const htmlPath = path.join(import.meta.dirname, "dist", "mcp-app.html");
-    try {
-      const text = await fs.readFile(htmlPath, "utf8");
-      return {
-        contents: [
-          {
-            uri: "ui://vehicle/chart-renderer/mcp-app.html",
-            mimeType: RESOURCE_MIME_TYPE,
-            text,
-          },
-        ],
-      };
-    } catch {
-      return { contents: [], isError: true };
+  // Task 2.4 — Embedded HTML resource for the chart-renderer UI.
+  // The handler reads the file at request time so it always serves the latest build.
+  registerAppResource(
+    server,
+    "Vehicle chart renderer",
+    "ui://vehicle/chart-renderer/mcp-app.html",
+    { mimeType: RESOURCE_MIME_TYPE },
+    async () => {
+      const htmlPath = path.join(import.meta.dirname, "dist", "mcp-app.html");
+      try {
+        const text = await fs.readFile(htmlPath, "utf8");
+        return {
+          contents: [
+            {
+              uri: "ui://vehicle/chart-renderer/mcp-app.html",
+              mimeType: RESOURCE_MIME_TYPE,
+              text,
+            },
+          ],
+        };
+      } catch {
+        return { contents: [], isError: true };
+      }
     }
-  }
-);
+  );
+
+  return server;
+}
 
 const app = express();
 app.use(cors());
@@ -100,11 +108,15 @@ app.use(express.json());
 
 app.post("/mcp", async (req, res) => {
   try {
+    const server = buildServer();
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
     });
-    res.on("close", () => transport.close());
+    res.on("close", () => {
+      transport.close();
+      server.close();
+    });
     await server.connect(transport);
     await transport.handleRequest(req, res, req.body);
   } catch (err) {
