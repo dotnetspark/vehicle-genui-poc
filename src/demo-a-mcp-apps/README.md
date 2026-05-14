@@ -225,7 +225,7 @@ above; (b) `DATABASE_URL_READONLY` in `.env` is not set or points to the wrong c
 
 **Blank chart / no chart appears**
 Open the browser DevTools console. The iframe URL follows the pattern
-`ui://vehicle/chart-renderer/mcp-app.html` — navigate directly to the served HTML at
+`ui://vehicle/chart-renderer/mcp-app.v2.html` — navigate directly to the served HTML at
 `http://localhost:3001` (if the server exposes a static route) and check for JavaScript errors.
 Ensure the result rows contain the column names the renderer expects (see `../shared/system-prompt.md`
 § Rendering contract).
