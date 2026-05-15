@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Demo A system prompt — MCP-first routing + comparison-shape hint.**
+  Strengthened `src/shared/system-prompt.md` and added a `# TOOL ROUTING — READ
+  FIRST` banner to the MCP `instructions` field in
+  `src/demo-a-mcp-apps/server.ts` so Claude Desktop reaches for
+  `query_vehicles` instead of web search for vehicle questions, and so
+  "compare A vs B" prompts settle on a stable grouped-chart shape across
+  repeated runs. No bundle change; users must re-paste
+  `src/shared/system-prompt.md` into Claude Desktop → Settings → Profile →
+  Custom Instructions and restart Claude Desktop to pick it up.
+
 ## [1.0.0] — 2026-05-14
 
 ### Added
