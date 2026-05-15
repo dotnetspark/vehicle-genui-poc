@@ -99,7 +99,23 @@ async function buildSchemaCheatsheet(): Promise<string> {
 }
 
 const cheatsheet = await buildSchemaCheatsheet();
-// Schema cheatsheet goes FIRST — LLMs weight the start of system prompts more
+// Two banners precede the schema cheatsheet. LLMs weight the start of system
+// prompts the most heavily — putting the routing rule first ensures Claude
+// reaches for `query_vehicles` instead of web search even before reading
+// the schema.
+const ROUTING_BANNER = `# TOOL ROUTING — READ FIRST
+
+For ANY question about UK vehicles, registrations, makes, models, fuel types,
+body types, licence status, SORN, or DVLA data — at any time period — ALWAYS
+call the \`query_vehicles\` MCP tool first.
+
+Do NOT use web search for these questions. The data lives in the connected
+PostgreSQL database, not on the public web. Web search returns stale or
+incorrect figures and wastes a turn. If \`query_vehicles\` errors, surface
+the error — do not silently fall back to web search.
+
+`;
+// Schema cheatsheet goes second — LLMs weight the start of system prompts more
 // heavily, and Claude was still guessing `vehicles`/`makes`/`registration_count`
 // even after the cheatsheet was appended at the end. The static prompt
 // (rendering contract, SQL constraints, rules) follows.
@@ -112,7 +128,7 @@ guesses that DO NOT EXIST: \`vehicles\`, \`makes\`, \`models\`, \`sales\`,
 \`make_name\`. The real names are listed in the cheatsheet immediately below.
 
 `;
-const SYSTEM_INSTRUCTIONS = `${SCHEMA_BANNER}${cheatsheet}\n\n---\n\n${STATIC_PROMPT}`;
+const SYSTEM_INSTRUCTIONS = `${ROUTING_BANNER}${SCHEMA_BANNER}${cheatsheet}\n\n---\n\n${STATIC_PROMPT}`;
 console.log(
   `Schema cheatsheet built (${cheatsheet.length} chars); total instructions: ${SYSTEM_INSTRUCTIONS.length} chars.`
 );
