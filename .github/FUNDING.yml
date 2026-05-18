@@ -1,6 +1,1 @@
-# GitHub funding manifest — see https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
-# Replace the placeholder URL below with your live Stripe Payment Link or
-# Stripe Checkout URL (https://buy.stripe.com/... or https://donate.stripe.com/...)
-# before relying on the Sponsor button — GitHub will render a 404 if the URL is bad.
-
-custom: ["https://buy.stripe.com/REPLACE_ME_WITH_YOUR_STRIPE_PAYMENT_LINK"]
+github: dotnetspark
