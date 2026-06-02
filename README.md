@@ -258,3 +258,24 @@ questions.
 
 DVLA VEH0120 — UK licensed and SORN vehicles by make, model, fuel type, body type,
 and quarter. ~240k source rows → ~19M fact rows after ETL. Coverage: 1994 Q4 → 2025 Q2.
+
+---
+
+## Sponsor
+
+If you find this work valuable, consider supporting its continued development via a one-time
+payment or recurring sponsorship. Sponsorship is handled through Stripe Payment Links, configured
+in `.github/FUNDING.yml` with a `custom:` entry.
+
+**To enable the sponsor button:**
+
+Replace the placeholder URL in `.github/FUNDING.yml`:
+
+```yaml
+custom: ["https://buy.stripe.com/REPLACE_ME_WITH_YOUR_STRIPE_PAYMENT_LINK"]
+```
+
+with your live Stripe Payment Link (e.g., `https://buy.stripe.com/abc123...`).
+
+> **For maintainers:** Paste your live Stripe Payment Link URL in the `custom:` field above,
+> commit, and push. GitHub will render the sponsor button once the URL is live.
