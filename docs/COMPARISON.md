@@ -137,14 +137,17 @@ for the full list. They illustrate the failure surface of each approach.
 
 ### What surprised you (subjective — human-owned)
 
-[FILL IN: human observations after running both demos. Suggested prompts:
-what felt obviously better in each? Where did you get stuck longest?
-What would you have expected to be easy that wasn't?]
+**Demo A's biggest surprises:** Claude Desktop caches `ui://` resources by URI; rebuilding the bundle alone did not refresh the iframe, forcing cache-bust via URI versioning (`v2`, `v3`, `v4`). The Windows / MSIX build's sandboxed config path (`%LOCALAPPDATA%\Packages\Claude_…` instead of `%APPDATA%\Claude\…`) was discovered only by tailing logs. Module-level `McpServer` singletons failed on every second `StreamableHTTPServerTransport` POST with `"Already connected"` — required a stateless factory pattern. Together, these three issues consumed the most debugging time across v0.2.0 delivery.
+
+**Demo B's surprises:** The distinction between `available: "frontend"` (render-only, never callable by the LLM) and omitting it (fallthrough to `useFrontendTool`, actually callable) was not immediately obvious from the SDK documentation — one test cycle wasted. Model ID format matching against the Anthropic adapter was finicky; exact snapshots and baseURL paths had to align or the runtime silently dropped tool calls.
+
+**Both demos:** Reordering the schema cheatsheet / `COMMENT ON` documentation to the **top** of the system prompt (behind a `# AUTHORITATIVE SCHEMA` banner in Demo A's instructions) made a tangible difference in reducing Claude's hallucinations about non-existent tables like `vehicles` or `sales`. This validated the schema-first prompt-engineering approach (Constitution Article III).
 
 ### Rough time spent (subjective — human-owned)
 
-[FILL IN: hours spent on each demo from first commit to first golden-path
-answer end-to-end. Use the commit history as a reference if helpful.]
+**Demo A (v0.2.0):** Approximately 2.5 weeks from first commit (mid-April) to the v0.2.0 tag. This spans the MCP server scaffold, the Chart.js chart-renderer (~490 lines), bundling infrastructure, and two major refactors (URI versioning for caching, McpServer singleton → factory pattern). Much of the elapsed time was debugging infrastructure surprises and Windows-specific Claude Desktop wiring; the core MCP server logic and tool contract were straightforward.
+
+**Demo B (v0.3.0):** Approximately 1 week from first commit to the v0.3.0 tag. This was faster because the PostgreSQL schema and ETL were already hardened from Feature 001, the Generative-UI surface was well-scoped (three tools, three React components for charts), and the CopilotKit SDK's BuiltInAgent pattern was more predictable once the router distinction was clarified. Most effort went into the runtime state management, frontend tool hooks, and the three critical fixes (router mode, model ID, BuiltInAgent semantics).
 
 ---
 
