@@ -1,0 +1,32 @@
+title: Sponsorship & Funding
+labels: ["sponsorship"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Sponsorship & Funding
+        
+        Questions about supporting `vehicle-genui-poc`? This is the place.
+        
+        **Quick facts:**
+        - The project is self-funded and permissively licensed — everything is free and public.
+        - Sponsorship via Stripe helps pay for re-validation runs, API costs, and new demos as they emerge.
+        - No part of this project is gated behind sponsorship; sponsors don't get priority support or private access.
+        - All help happens in public — so everyone benefits.
+        
+        **See also:** [`.github/SPONSORSHIP.md`](../SPONSORSHIP.md) — a full breakdown of what sponsorship pays for and how it works.
+
+  - type: textarea
+    attributes:
+      label: Your question or idea
+      description: What would you like to know about supporting the project?
+      placeholder: "How can I contribute financially? What if I want to sponsor with a grant instead?"
+    validations:
+      required: true
+
+  - type: checkbox
+    attributes:
+      label: Acknowledgments
+      options:
+        - label: "I've read `.github/SPONSORSHIP.md` and `README.md`"
+          required: false

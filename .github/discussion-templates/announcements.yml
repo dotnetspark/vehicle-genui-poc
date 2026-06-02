@@ -1,0 +1,45 @@
+title: Announcements
+labels: ["announcement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Announcements
+        
+        This category is for maintainers and core contributors to share news about the project:
+        - **New releases** (`v1.0.0`, etc.)
+        - **Major changes** to the comparison methodology or results
+        - **Breaking changes** to the demo setup or API
+        - **Roadmap updates** and calls for feedback
+        - **Milestones** (e.g., "we're now re-validating against Claude 4.0")
+        
+        Community members: if you have news to share, open a [General Discussion](#general-discussion) instead.
+
+  - type: markdown
+    attributes:
+      value: |
+        💡 **For maintainers:** use this template to draft and gather feedback before publishing to `CHANGELOG.md`.
+        
+  - type: textarea
+    attributes:
+      label: Announcement
+      description: What's the news?
+      placeholder: "v1.0.0 released: both demos now support the new VEH0120 schema variant..."
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Impact
+      description: Optional — who does this affect, and how?
+      placeholder: "This fixes a SQL parsing issue that affected Demo B. All users should upgrade."
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Links
+      description: Links to relevant issues, PRs, or docs.
+      placeholder: "- Closes #42\n- See docs/COMPARISON.md for updated results"
+    validations:
+      required: false
