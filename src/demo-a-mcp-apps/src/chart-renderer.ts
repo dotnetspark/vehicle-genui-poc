@@ -433,6 +433,70 @@ export function setHostBridge(bridge: HostBridge): void {
 // Public API
 // ---------------------------------------------------------------------------
 
+
+// ---------------------------------------------------------------------------
+// Chunked envelope support (feat/demo-a/schema-and-streaming)
+// ---------------------------------------------------------------------------
+
+/**
+ * structuredContent shape returned by `query_vehicles_chunked`.
+ */
+export interface ChunkedEnvelope {
+  rows: unknown[];
+  has_more: boolean;
+  next_cursor: number | null;
+  chunk_size: number;
+  cursor: number;
+}
+
+/** Narrow structuredContent to ChunkedEnvelope (checks for `has_more` field). */
+export function isChunkedEnvelope(v: unknown): v is ChunkedEnvelope {
+  if (!v || typeof v !== "object") return false;
+  const obj = v as Record<string, unknown>;
+  return (
+    Array.isArray(obj["rows"]) &&
+    typeof obj["has_more"] === "boolean" &&
+    typeof obj["cursor"] === "number"
+  );
+}
+
+/**
+ * Called by mcp-app.ts on each chunk.  Shows a progress spinner while
+ * has_more is true, then renders the full dataset when the final chunk arrives.
+ */
+export function renderFromChunked(
+  allRows: unknown[],
+  envelope: ChunkedEnvelope
+): void {
+  if (envelope.has_more) {
+    clearRoot();
+    const root = getRoot();
+    const el = document.createElement("div");
+    el.style.cssText =
+      "display:flex;flex-direction:column;align-items:center;justify-content:center;" +
+      "gap:12px;padding:32px;font-family:Inter,system-ui,sans-serif;color:#64748b;";
+    const spinner = document.createElement("div");
+    spinner.style.cssText =
+      "width:28px;height:28px;border:3px solid rgba(99,102,241,0.2);" +
+      "border-top-color:#6366f1;border-radius:50%;animation:spin 700ms linear infinite;";
+    if (!document.head.querySelector("style[data-chart-spinner]")) {
+      const s = document.createElement("style");
+      s.setAttribute("data-chart-spinner", "");
+      s.textContent = "@keyframes spin{to{transform:rotate(360deg)}}";
+      document.head.appendChild(s);
+    }
+    const msg = document.createElement("p");
+    msg.style.cssText = "margin:0;font-size:0.875rem;";
+    const chunkNum = Math.ceil(envelope.cursor / envelope.chunk_size) + 1;
+    msg.textContent = `Loading… ${allRows.length} rows so far (chunk ${chunkNum})`;
+    el.appendChild(spinner);
+    el.appendChild(msg);
+    root.appendChild(el);
+    return;
+  }
+  renderFromRows(allRows);
+}
+
 /** Clears #root and mounts the appropriate visualisation for `rows`. */
 export function renderFromRows(rows: unknown[]): void {
   clearRoot();

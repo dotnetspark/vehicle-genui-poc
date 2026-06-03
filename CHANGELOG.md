@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Demo A -- schema cheatsheet constraint + sample-value columns.**
+  `buildSchemaCheatsheet()` now includes a `constraints` cell per column
+  (NOT NULL, PK, UNIQUE, FK->table.col, CHECK) sourced from `pg_constraint` +
+  `pg_attribute.attnotnull`, plus a "Sample values" list for low-cardinality
+  TEXT/integer columns (<=30 distinct values per `pg_stats`).
+
+- **Demo A -- `query_vehicles_chunked` streaming tool (feature-flagged).**
+  Set `ENABLE_STREAMING=true` to register a cursor-based pagination tool.
+  Returns `{ rows, has_more, next_cursor, chunk_size, cursor }`.
+
+- **Demo A -- `query-cache.ts` LRU query cache.**
+  `queryCache` singleton wired into `query_vehicles`; 11 unit tests pass.
+  `GET /cache-stats` debug endpoint. Configurable via `CACHE_MAX`/`CACHE_TTL`.
+
+- **Demo A -- chunked envelope support in client.**
+  `chart-renderer.ts` exports `ChunkedEnvelope`, `isChunkedEnvelope`,
+  `renderFromChunked`. `mcp-app.ts` accumulates rows across chunked tool results.
+
+- **Demo A -- `examples/streaming-consumer.ts`.**
+  Standalone TypeScript example for consuming `query_vehicles_chunked`.
+
+- **Demo A -- content-addressed resource URI.**
+  `vite.config.ts` `write-resource-uri` plugin writes `dist/resource-uri.json`;
+  `server.ts` reads it at startup.
+
+
 ### Changed
 
 - **Demo A system prompt — MCP-first routing + comparison-shape hint.**
