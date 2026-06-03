@@ -32,9 +32,65 @@ Three corrections to Phase 3 (Tasks 3.1–3.3):
 
 3. **Bundle size:** Spec target 150–400 KB; actual 509.6 KB (gzip: 143.9 KB). Overshoot caused by zod v4 transitive dependency. Gzip is within practical limits; no action needed.
 
+## Phase 6 — Demo B Frontend + Demo A Caching
+
+### 2026-06-03 — Zod Schema Naming Conventions for Demo B Tool Parameters
+
+**Author:** Dallas
+
+Adding Zod runtime validation to the three `useCopilotAction` handler functions in `src/demo-b-copilotkit/frontend/src/tools/`. Convention: Zod schema objects use `Z` prefix + PascalCase (e.g., `ZShowFuelBreakdownArgs`), inferred types use bare PascalCase with no prefix (e.g., `ShowFuelBreakdownArgs`). Single schema file: `src/demo-b-copilotkit/frontend/src/schemas/toolSchemas.ts`. The `Z` prefix is idiomatic in Zod-heavy codebases and distinguishes runtime schema objects from plain TypeScript interfaces at a glance.
+
+**Rationale:** Consistency and clarity in Demo B tool schema organization. If Demo B grows beyond ~10 tools, split by tool family (e.g., `chartSchemas.ts`, `filterSchemas.ts`).
+
+**Impact:** Demo B frontend only; no cross-demo impact.
+
+**References:** `src/demo-b-copilotkit/frontend/src/schemas/toolSchemas.ts` (new file).
+
+---
+
+### 2026-06-03 — LRU Cache and Content-Hash URI Strategy for Demo A (consolidated)
+
+**By:** Parker, Ripley
+
+**Part A — Cache key normalisation:**
+Normalise SQL by (1) collapsing all whitespace runs to a single space and (2) lower-casing before storing in the LRU map. The LLM often varies indentation and keyword casing across requests for the same query. Full SQL parsing to a canonical AST would be correct but is heavyweight for a PoC. Whitespace + case normalisation catches the dominant variation patterns with zero external dependencies.
+
+**Part B — Content-hash URI strategy (Parker's initial design + Ripley's refinements):**
+
+**Choice:** Compute SHA-256 of `dist/mcp-app.html`, take first 12 hex chars (Ripley's refinement; Parker proposed 16), and use `ui://vehicle/chart-renderer/{hash}.html` as the resource URI.
+
+**Three resolution paths (Ripley's decision):**
+1. **Build-time (preferred):** Vite `write-resource-uri` plugin writes `dist/resource-uri.json`. Server reads it at startup.
+2. **Runtime fallback:** Server computes the hash from the bundle on startup when the manifest is absent (dev workflow, first run).
+3. **Legacy fallback:** If the bundle does not exist, falls back to the existing static `mcp-app.v4.html` URI so the server still boots.
+
+**Rationale:** Storing the URI in the dist manifest decouples the build and runtime; the server does not need to compute hashes on every request. The 12-char prefix (Ripley) is sufficient for uniqueness within this PoC (48 bits, negligible collision probability).
+
+**Alternative rejected:** Always compute at runtime on every request — adds I/O per request and the URI would change if the file changes between requests.
+
+**Part C — Additional Ripley refinements:**
+- **Progressive table render threshold:** `PROGRESSIVE_THRESHOLD = 200`, `CHUNK_SIZE = 150`. The `MAX_ROWS_IN_TEXT = 50` server-side limit means real-world result sets rarely exceed 50–100 rows. 150 rows/frame keeps each frame budget under ~16 ms.
+- **Render telemetry:** `document.dispatchEvent(new CustomEvent("chart-render", ...))` rather than `window.dispatchEvent`. MCP Apps UIs run inside an iframe; `document` is always the frame's own document, making the event reliably catchable by integration tests.
+
+**Impact:** Demo A MCP server and UI only; no cross-demo impact.
+
+**References:** `src/demo-a-mcp-apps/server.ts`; `src/demo-a-mcp-apps/query-cache.ts` (new module, Demo A only); Vite build pipeline.
+
+---
+
+### 2026-06-03 — LRU Cache Module Location (Demo A isolation)
+
+**Author:** Ripley
+
+**Decision:** `query-cache.ts` and its tests live under `src/demo-a-mcp-apps/` rather than `src/shared/`.
+
+**Rationale:** The constitution states "Demo A and Demo B share only the database — no cross-demo code." The LRU cache wraps Demo A's `query_vehicles` Postgres pool; if Demo B ever needs a cache it will use its own implementation. Keeping it in Demo A avoids premature abstraction and respects the isolation constraint.
+
+---
+
 ## Active Decisions
 
-No new active decisions.
+No new active decisions as of 2026-06-03.
 
 ## Governance
 
