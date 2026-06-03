@@ -34,6 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vite.config.ts` `write-resource-uri` plugin writes `dist/resource-uri.json`;
   `server.ts` reads it at startup.
 
+- **Demo A — enhanced line-chart auto-detection heuristics.**
+  `pickChartType()` in `src/chart-renderer.ts` now detects `month`, `date`,
+  `year_quarter` columns (rule 2) and year-only + numeric metric + >1 row
+  (rule 3) as line-chart triggers — so annual-trend queries no longer fall
+  back to table. `renderLine()` updated with a multi-path `xLabel` resolver
+  that handles all five temporal shapes: `period_label`, `year + quarter`,
+  `year_quarter`, `year + month`, `date`, and `year`-only. Closes #35.
 
 ### Changed
 
