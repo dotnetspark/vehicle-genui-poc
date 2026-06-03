@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Demo A — render telemetry + fallback suggestions.**
+  `renderFromRows()` in `src/chart-renderer.ts` now wraps each render call
+  in `performance.now()` and emits `console.log("[telemetry] render
+  type=... rows=... duration=...ms")` plus a `CustomEvent("chart-render",
+  {detail: {type, rows, durationMs}})` on `document` — useful for
+  integration tests and future performance dashboards.  The `table` fallback
+  in `suggestionsFor()` now appends a shape hint showing the result-set
+  column names to guide the user toward a chart-friendly query.  Closes #34.
+
 ### Changed
 
 - **Demo A system prompt — MCP-first routing + comparison-shape hint.**

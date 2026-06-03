@@ -441,6 +441,7 @@ export function renderFromRows(rows: unknown[]): void {
 
   const typed = rows as Record<string, unknown>[];
 
+  const t0 = performance.now();
   switch (type) {
     case "line":
       renderLine(typed);
@@ -454,6 +455,12 @@ export function renderFromRows(rows: unknown[]): void {
     default:
       renderTable(typed);
   }
+  const durationMs = Math.round(performance.now() - t0);
+
+  console.log(`[telemetry] render type=${type} rows=${rows.length} duration=${durationMs}ms`);
+  document.dispatchEvent(
+    new CustomEvent("chart-render", { detail: { type, rows: rows.length, durationMs } })
+  );
 
   renderSuggestions(type, typed);
 }
@@ -488,12 +495,15 @@ function suggestionsFor(type: ChartType, rows: Record<string, unknown>[]): strin
         "Limit to electric vehicles by make",
         "Compare 2024 vs 2019 fuel mix",
       ];
-    default:
+    default: {
+      const keys = rows.length ? Object.keys(rows[0]).join(", ") : "";
       return [
         "Top 10 makes by licensed registrations",
         "Fuel mix for the most recent year",
         "Quarterly trend of EV registrations",
+        ...(keys ? [`Try: "Show ${keys} as a chart"  — add a year/period column or make/fuel column to auto-pick a chart type`] : []),
       ];
+    }
   }
 }
 
