@@ -51,3 +51,58 @@
 - `specs/feat-002-demo-a-mcp-apps/tasks.md` — 3.1/3.2/3.3 checkboxes marked done with evidence
 - `.squad/decisions/inbox/dallas-structured-content-shape.md` — deviation record
 
+## 2026-06-03 — feat/demo-b/frontend-improvements (Quick Wins)
+
+Requested by: Yadel Lopez. Three improvements to Demo B's frontend.
+
+### 1. Zod-validated tool parameter schemas
+
+- Created `src/demo-b-copilotkit/frontend/src/schemas/toolSchemas.ts` with:
+  - Primitive schemas: `ZFuelDatum`, `ZSeriesPoint`, `ZSeries`, `ZMakeDatum`
+  - Tool-level schemas: `ZShowFuelBreakdownArgs`, `ZShowTrendArgs`, `ZShowTopMakesArgs`
+- All three `useCopilotAction` handlers rewritten to call `schema.safeParse(rawArgs)`;
+  return `{ ok: false, error: "Validation failed: …" }` on failure.
+- Naming convention filed as `.squad/decisions/inbox/dallas-zod-schema-naming.md`.
+- Zod `^3.25.76` added as explicit dependency (was transitive-only before).
+
+### 2. Progressive rendering states
+
+- Created `ProgressPanel` component: renders `pending | inProgress | executing`
+  states with a colour-coded badge (`slate / amber / blue`) overlay on top of either
+  a skeleton or a partial chart (if `args` already has data mid-stream).
+- All three tool `render` callbacks updated from the binary `status !== "complete" → skeleton`
+  pattern to the three-state `ProgressPanel`.
+- Partial data path: if `args.data.length > 0` (or `series` points > 0) while
+  streaming, the real chart renders immediately with the badge overlay.
+
+### 3. Error boundaries and graceful fallbacks
+
+- Created `PanelErrorBoundary` class component: per-panel isolation, Retry resets
+  state, "View raw data" collapses raw args JSON in a `<pre>` block.
+- `Dashboard` updated to wrap each panel child in `PanelErrorBoundary`.
+- Added `{ kind: "error"; title; message; rawArgs? }` to `PanelDescriptor` union for
+  future server-side failure surfacing.
+- App-level `ErrorBoundary` rewritten with Tailwind classes, Retry button, and
+  collapsible stack-trace `<details>` (replaces legacy inline `style={}`).
+
+### Build verification
+
+- `pnpm run build` in `src/demo-b-copilotkit/frontend` → exit 0, no type errors.
+- Chunk-size warnings are pre-existing (CopilotKit transitive deps); not introduced here.
+
+### Files created/modified
+
+| File | Action |
+|------|--------|
+| `src/demo-b-copilotkit/frontend/src/schemas/toolSchemas.ts` | Created |
+| `src/demo-b-copilotkit/frontend/src/components/ProgressPanel.tsx` | Created |
+| `src/demo-b-copilotkit/frontend/src/components/PanelErrorBoundary.tsx` | Created |
+| `src/demo-b-copilotkit/frontend/src/tools/useShowFuelBreakdown.tsx` | Rewritten |
+| `src/demo-b-copilotkit/frontend/src/tools/useShowTrend.tsx` | Rewritten |
+| `src/demo-b-copilotkit/frontend/src/tools/useShowTopMakes.tsx` | Rewritten |
+| `src/demo-b-copilotkit/frontend/src/state/usePanels.ts` | Added `error` kind |
+| `src/demo-b-copilotkit/frontend/src/components/Dashboard.tsx` | Wrap panels with boundary |
+| `src/demo-b-copilotkit/frontend/src/ErrorBoundary.tsx` | Tailwind + Retry |
+| `src/demo-b-copilotkit/frontend/package.json` | Added `zod ^3.25.76` |
+| `CHANGELOG.md` | Updated |
+| `.squad/decisions/inbox/dallas-zod-schema-naming.md` | Filed |

@@ -1,7 +1,9 @@
 import { useCopilotAction } from "@copilotkit/react-core";
-import { ChartSkeleton } from "../components/ChartSkeleton";
-import { TrendChart, type Series } from "../components/TrendChart";
+import { TrendChart } from "../components/TrendChart";
+import { ProgressPanel } from "../components/ProgressPanel";
 import { setPanel } from "../state/usePanels";
+import { ZShowTrendArgs } from "../schemas/toolSchemas";
+import type { Series } from "../components/TrendChart";
 
 export function useShowTrend() {
   useCopilotAction({
@@ -32,14 +34,28 @@ export function useShowTrend() {
         ],
       },
     ],
-    handler: async ({ panelId, title, series }: { panelId: string; title: string; series: Series[] }) => {
+    handler: async (rawArgs) => {
+      const parsed = ZShowTrendArgs.safeParse(rawArgs);
+      if (!parsed.success) {
+        const msg = parsed.error.issues.map((i) => i.message).join("; ");
+        return { ok: false, error: `Validation failed: ${msg}` };
+      }
+      const { panelId, title, series } = parsed.data;
       setPanel(panelId, { kind: "trend", title, series });
       return { ok: true, panelId };
     },
     render: ({ status, args }) => {
-      if (status !== "complete") return <ChartSkeleton />;
       const series = (args.series ?? []) as Series[];
-      return <TrendChart series={series} />;
+      const hasPartial = series.some((s) => s.points?.length > 0);
+      if (status === "complete") return <TrendChart series={series} />;
+      return (
+        <ProgressPanel
+          status={status}
+          itemCount={series.reduce((acc, s) => acc + (s.points?.length ?? 0), 0)}
+          partialContent={hasPartial ? <TrendChart series={series} /> : undefined}
+        />
+      );
     },
   });
 }
+
