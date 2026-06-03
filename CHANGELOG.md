@@ -9,6 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Tests — Demo A + B comprehensive test suite (`chore/tests/demo-a-b`).**
+  - `query-cache.test.ts`: extended with 9 new tests — key normalisation (4) and
+    LRU eviction (5) — using new `createQueryCache(max, ttl)` factory export.
+  - `resource-uri.ts`: extracted `resolveResourceUri` from `server.ts` into its
+    own module with an injectable `FsAdapter` seam for deterministic unit tests.
+  - `resource-uri.test.ts`: 18 tests across manifest-path, runtime-hash,
+    fallback, URI-format, and real-fs integration (32 Demo A tests total, all passing).
+  - Demo B Vitest infrastructure: `vitest.config.ts`, `src/__tests__/setup.ts`
+    (ResizeObserver + matchMedia stubs), `jsdom` environment, `globals: true`.
+  - `ChartSkeleton.test.tsx` (3), `Panel.test.tsx` (5), `ProgressPanel.test.tsx` (6),
+    `PanelErrorBoundary.test.tsx` (8), `usePanels.test.ts` (10),
+    `Dashboard.test.tsx` (9), `toolSchemas.test.ts` (22) — 63 Vitest tests, all passing.
+  - `scripts/run-tests.sh` and `scripts/run-tests.ps1` — CI runner scripts for
+    both Demo A (node built-in) and Demo B (pnpm vitest) suites.
+
+- **Demo B — `PanelErrorBoundary.tsx`.**
+  Per-panel React error boundary with Retry and "View raw data" affordances.
+
+- **Demo B — `ProgressPanel.tsx`.**
+  Renders pending / inProgress / executing states with labelled badges.
+
+- **Demo B — `src/schemas/toolSchemas.ts`.**
+  Zod schemas (`ZShowFuelBreakdownArgs`, `ZShowTrendArgs`, `ZShowTopMakesArgs`)
+  for runtime validation of CopilotKit tool arguments.
+
+- **Demo B — `error` panel kind in `usePanels.ts`.**
+  `PanelDescriptor` union now includes `{ kind: "error"; title: string; message: string }`.
+
+- **Demo B — `Dashboard.tsx` PanelErrorBoundary wrapping.**
+  All chart panels are now wrapped in `PanelErrorBoundary`; error-kind panels
+  render an inline error display.
+
 - **Demo A -- schema cheatsheet constraint + sample-value columns.**
   `buildSchemaCheatsheet()` now includes a `constraints` cell per column
   (NOT NULL, PK, UNIQUE, FK->table.col, CHECK) sourced from `pg_constraint` +
