@@ -61,6 +61,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Demo B — `error` panel kind** in `usePanels` store — enables future
   server-side tool failures to surface as first-class error cards in the dashboard.
 
+- **Tests — Demo A + B comprehensive test suite.**
+  `query-cache.test.ts` extended with 9 new tests — key normalisation (4) and
+  LRU eviction (5) — using the new `createQueryCache(max, ttl)` factory export.
+  `resource-uri.ts` extracted from `server.ts` with injectable `FsAdapter` seam;
+  `resource-uri.test.ts` covers 18 cases (manifest-path, runtime-hash, fallback,
+  URI-format, real-fs integration; 32 Demo A tests total). Demo B: `vitest.config.ts`,
+  `__tests__/setup.ts` (ResizeObserver + matchMedia stubs), plus
+  `ChartSkeleton.test.tsx` (3), `Panel.test.tsx` (5), `ProgressPanel.test.tsx` (6),
+  `PanelErrorBoundary.test.tsx` (8), `usePanels.test.ts` (10),
+  `Dashboard.test.tsx` (9), `toolSchemas.test.ts` (22) — 63 Vitest tests total.
+  `scripts/run-tests.sh` + `scripts/run-tests.ps1` CI runner scripts.
+
 
 ### Changed
 
@@ -77,6 +89,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Demo B — `ErrorBoundary` (app-level)** now uses Tailwind v4 classes for
   consistent styling and adds a Retry button + collapsible stack trace, replacing
   the legacy inline `style={}` fallback.
+
+- **Demo A — `resource-uri`: manifest field renamed `uri` → `resourceUri`, hash
+  shortened to 12 hex chars.** `dist/resource-uri.json` now emits `resourceUri`;
+  `resolveResourceUri()` reads `resourceUri`; runtime SHA-256 fallback truncated
+  to 12 characters. **Breaking:** consumers reading `uri` must switch to `resourceUri`.
 
 ## [1.0.0] ΓÇö 2026-05-14
 

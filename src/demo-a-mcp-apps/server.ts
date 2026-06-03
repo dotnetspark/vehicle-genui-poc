@@ -23,12 +23,12 @@ import {
 } from "@modelcontextprotocol/ext-apps/server";
 import cors from "cors";
 import express from "express";
-import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { Pool, DatabaseError } from "pg";
 import { z } from "zod";
 import { queryCache } from "./query-cache.ts";
+import { resolveResourceUri } from "./resource-uri.ts";
 
 const PORT = 3001;
 
@@ -43,29 +43,6 @@ const MAX_ROWS_IN_TEXT = 50;
 // ---------------------------------------------------------------------------
 // Content-addressed resource URI
 // ---------------------------------------------------------------------------
-
-async function resolveResourceUri(): Promise<string> {
-  const jsonPath = path.join(import.meta.dirname, "dist", "resource-uri.json");
-  try {
-    const manifest = JSON.parse(await fs.readFile(jsonPath, "utf8")) as { uri: string };
-    console.log(`UI resource URI (manifest): ${manifest.uri}`);
-    return manifest.uri;
-  } catch {
-    // No manifest -- try runtime hash.
-  }
-  const htmlPath = path.join(import.meta.dirname, "dist", "mcp-app.html");
-  try {
-    const content = await fs.readFile(htmlPath);
-    const hash = createHash("sha256").update(content).digest("hex").slice(0, 16);
-    const uri = `ui://vehicle/chart-renderer/${hash}.html`;
-    console.log(`UI resource URI (runtime hash): ${uri}`);
-    return uri;
-  } catch {
-    const fallback = "ui://vehicle/chart-renderer/mcp-app.v4.html";
-    console.warn(`dist/mcp-app.html not found; falling back to ${fallback}`);
-    return fallback;
-  }
-}
 
 const RESOURCE_URI = await resolveResourceUri();
 

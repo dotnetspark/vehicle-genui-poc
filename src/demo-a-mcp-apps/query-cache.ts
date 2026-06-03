@@ -58,3 +58,47 @@ export const queryCache = {
     };
   },
 } as const;
+
+/**
+ * Factory that creates an independent LRU cache instance with the given
+ * capacity and TTL. Used in unit tests to exercise eviction without depending
+ * on the module-level singleton's environment-variable configuration.
+ */
+export function createQueryCache(max: number, ttl: number) {
+  const c = new LRUCache<string, CacheEntry>({ max, ttl });
+  let h = 0;
+  let m = 0;
+
+  return {
+    get(sql: string): CacheEntry | undefined {
+      const hit = c.get(sql);
+      if (hit) { h++; } else { m++; }
+      return hit;
+    },
+
+    set(sql: string, entry: CacheEntry): void {
+      c.set(sql, entry);
+    },
+
+    delete(sql: string): void {
+      c.delete(sql);
+    },
+
+    clear(): void {
+      c.clear();
+      h = 0;
+      m = 0;
+    },
+
+    stats() {
+      return {
+        size: c.size,
+        max,
+        ttl_ms: ttl,
+        hits: h,
+        misses: m,
+        hit_rate: h + m === 0 ? null : h / (h + m),
+      };
+    },
+  } as const;
+}
