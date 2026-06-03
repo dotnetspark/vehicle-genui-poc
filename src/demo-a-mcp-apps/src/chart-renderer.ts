@@ -160,9 +160,11 @@ export type ChartType = "line" | "bar" | "donut" | "table";
  * Pure function — picks the chart type based on row shape.
  * Precedence (highest wins):
  *  1. period_label OR (year AND quarter) → "line"
- *  2. make + count-like                  → "bar"
- *  3. fuel + count-like                  → "donut"
- *  4. else                               → "table"
+ *  2. month OR date OR year_quarter column → "line"   (enhanced heuristics)
+ *  3. year-only + numeric count + > 1 row → "line"    (annual trend)
+ *  4. make + count-like                  → "bar"
+ *  5. fuel + count-like                  → "donut"
+ *  6. else                               → "table"
  */
 export function pickChartType(rows: unknown[]): ChartType {
   if (!rows.length) return "table";
@@ -170,8 +172,15 @@ export function pickChartType(rows: unknown[]): ChartType {
   const row = rows[0] as Record<string, unknown>;
   const keys = Object.keys(row);
 
+  // Rule 1 — explicit period columns (unchanged)
   if (keys.includes("period_label") || (keys.includes("year") && keys.includes("quarter")))
     return "line";
+
+  // Rule 2 — other temporal columns (month, date, year_quarter)
+  if (keys.some((k) => k === "month" || k === "date" || k === "year_quarter")) return "line";
+
+  // Rule 3 — year-only with a numeric metric and multiple rows → annual trend
+  if (keys.includes("year") && countKey(row) !== undefined && rows.length > 1) return "line";
 
   if (keys.includes("make") && countKey(row) !== undefined) return "bar";
 
@@ -217,12 +226,30 @@ function renderLine(rows: Record<string, unknown>[]): void {
   const first = capped[0];
 
   const hasLabel = Object.prototype.hasOwnProperty.call(first, "period_label");
-  const xLabel = (row: Record<string, unknown>): string =>
-    hasLabel
-      ? String(row["period_label"] ?? "")
-      : `${row["year"]} Q${row["quarter"]}`;
+  const hasYearQuarter =
+    Object.prototype.hasOwnProperty.call(first, "year") &&
+    Object.prototype.hasOwnProperty.call(first, "quarter");
+  const hasYearMonth = Object.prototype.hasOwnProperty.call(first, "month");
+  const hasDate = Object.prototype.hasOwnProperty.call(first, "date");
+  const hasYearQuarterCol = Object.prototype.hasOwnProperty.call(first, "year_quarter");
 
-  const skipKeys = new Set<string>(["period_label", "year", "quarter"]);
+  const xLabel = (row: Record<string, unknown>): string => {
+    if (hasLabel) return String(row["period_label"] ?? "");
+    if (hasYearQuarter) return `${row["year"]} Q${row["quarter"]}`;
+    if (hasYearQuarterCol) return String(row["year_quarter"] ?? "");
+    if (hasYearMonth) return `${row["year"] ?? ""}-${String(row["month"] ?? "").padStart(2, "0")}`;
+    if (hasDate) return String(row["date"] ?? "");
+    return String(row["year"] ?? "");
+  };
+
+  const skipKeys = new Set<string>([
+    "period_label",
+    "year",
+    "quarter",
+    "month",
+    "date",
+    "year_quarter",
+  ]);
   const ck = countKey(first);
   if (ck) skipKeys.add(ck);
 
