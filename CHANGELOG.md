@@ -9,21 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Demo A — LRU query cache for `query_vehicles` tool.**
-  Wraps the Postgres round-trip with an in-process `lru-cache` v11 LRU.
-  SQL is normalised (whitespace collapsed, lowercased) before keying so
-  semantically identical queries share a cache entry.  Config via env vars:
-  `CACHE_MAX` (max entries, default 100) and `CACHE_TTL` (TTL ms, default
-  300 000 = 5 min).  Module: `src/demo-a-mcp-apps/query-cache.ts`.
-  Closes #32.
-
-- **Demo A — `/cache-stats` debug endpoint.**
-  `GET http://localhost:3001/cache-stats` returns `{ size, max, ttl_ms }`.
-
-- **Demo A — unit tests for `query-cache`.**
-  11 tests in `src/demo-a-mcp-apps/query-cache.test.ts` covering
-  `normalizeSQL`, cache get/set, normalisation invariants, stats, and LRU
-  eviction.  Run with `npm test`.
+- **Demo A — content-hash resource URIs for the UI bundle.**
+  `vite.config.ts` gains a `write-resource-uri` Vite plugin that SHA-256
+  hashes `dist/mcp-app.html` at build time and writes `dist/resource-uri.json`.
+  `server.ts` reads the manifest at startup via `resolveResourceUri()` (runtime
+  SHA-256 fallback, then legacy-URI fallback).  Both `registerAppTool`
+  `_meta.ui.resourceUri` and `registerAppResource` now use the
+  content-addressed `RESOURCE_URI` constant — so cache-busting is automatic
+  whenever the bundle changes.  Closes #33.
 
 ### Changed
 

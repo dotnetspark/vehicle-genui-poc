@@ -139,6 +139,45 @@ console.log(
   `Schema cheatsheet built (${cheatsheet.length} chars); total instructions: ${SYSTEM_INSTRUCTIONS.length} chars.`
 );
 
+const DIST_DIR = path.join(import.meta.dirname, "dist");
+
+/**
+ * Resolve the content-addressed URI for the UI bundle.
+ *
+ * Priority:
+ *   1. `dist/resource-uri.json`  — written by the `write-resource-uri` Vite plugin
+ *      at build time; most accurate.
+ *   2. Runtime SHA-256 of `dist/mcp-app.html` — used when the server is started
+ *      without running a fresh build (e.g., `npm run serve` in dev after a manual
+ *      file copy).
+ *   3. Legacy static URI — fallback when `dist/` doesn't exist at all.
+ */
+async function resolveResourceUri(): Promise<string> {
+  const LEGACY_URI = "ui://vehicle/chart-renderer/mcp-app.v4.html";
+  try {
+    const manifest = JSON.parse(
+      await fs.readFile(path.join(DIST_DIR, "resource-uri.json"), "utf8")
+    ) as { resourceUri: string };
+    console.log(`[resource-uri] loaded from manifest: ${manifest.resourceUri}`);
+    return manifest.resourceUri;
+  } catch {
+    // Manifest missing — try runtime hash.
+  }
+  try {
+    const html = await fs.readFile(path.join(DIST_DIR, "mcp-app.html"));
+    const hash = createHash("sha256").update(html).digest("hex").slice(0, 12);
+    const uri = `ui://vehicle/chart-renderer/mcp-app.${hash}.html`;
+    console.log(`[resource-uri] computed at runtime: ${uri}`);
+    return uri;
+  } catch {
+    // dist/ missing — use legacy URI.
+  }
+  console.warn(`[resource-uri] fallback to legacy URI: ${LEGACY_URI}`);
+  return LEGACY_URI;
+}
+
+const RESOURCE_URI = await resolveResourceUri();
+
 // Shared constant — used in both the cache-hit path and the live-query path.
 const MAX_ROWS_IN_TEXT = 50;
 
@@ -169,7 +208,7 @@ function buildServer(): McpServer {
       inputSchema: {
         sql: z.string().describe("A raw SQL query to execute against the vehicles database"),
       },
-      _meta: { ui: { resourceUri: "ui://vehicle/chart-renderer/mcp-app.v4.html" } },
+      _meta: { ui: { resourceUri: RESOURCE_URI } },
     },
     async ({ sql }) => {
       // Check cache first — avoids a round-trip to Postgres for repeated queries.
@@ -236,16 +275,16 @@ function buildServer(): McpServer {
   registerAppResource(
     server,
     "Vehicle chart renderer",
-    "ui://vehicle/chart-renderer/mcp-app.v4.html",
+    RESOURCE_URI,
     { mimeType: RESOURCE_MIME_TYPE },
     async () => {
-      const htmlPath = path.join(import.meta.dirname, "dist", "mcp-app.html");
+      const htmlPath = path.join(DIST_DIR, "mcp-app.html");
       try {
         const text = await fs.readFile(htmlPath, "utf8");
         return {
           contents: [
             {
-              uri: "ui://vehicle/chart-renderer/mcp-app.v4.html",
+              uri: RESOURCE_URI,
               mimeType: RESOURCE_MIME_TYPE,
               text,
             },
