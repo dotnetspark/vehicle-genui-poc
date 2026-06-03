@@ -1,0 +1,71 @@
+title: Support / How-To
+labels: ["support"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Support & How-To
+        
+        Have a question about how to run one of the demos, understand the comparison, or troubleshoot an issue? Post it here.
+        
+        **Tips for getting help:**
+        - Describe the step you're on (e.g., "I'm trying to set up Demo A")
+        - Share error messages or unexpected behaviour in full
+        - Tell us your environment: OS, Node/Python version, Docker status
+        - If it's about the code, link to the relevant file or explain which demo
+        
+  - type: textarea
+    attributes:
+      label: Your question or issue
+      description: What are you trying to do, and what's blocking you?
+      placeholder: "I'm trying to... but I get this error..."
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Which demo?
+      description: If your question is about a specific demo, let us know.
+      options:
+        - Not sure / general question
+        - Demo A (MCP Apps)
+        - Demo B (CopilotKit)
+        - ETL / database setup
+        - Other
+
+  - type: textarea
+    attributes:
+      label: Environment
+      description: |
+        Paste the output of the following (if relevant):
+        - `node --version` and `npm --version` or `pnpm --version`
+        - `python --version`
+        - `uv --version` (if using)
+        - `docker --version` and `docker-compose --version`
+        - Your OS
+      placeholder: |
+        node v22.x.x
+        pnpm 9.x.x
+        python 3.13.x
+        macOS 14.x
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: Walk us through what you did.
+      placeholder: |
+        1. Cloned the repo
+        2. Ran `pnpm install`
+        3. ...
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Error output or logs
+      description: Paste any error messages or relevant logs.
+      placeholder: "Paste error output here..."
+    validations:
+      required: false
