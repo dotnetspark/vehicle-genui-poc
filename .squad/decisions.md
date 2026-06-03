@@ -88,6 +88,25 @@ Normalise SQL by (1) collapsing all whitespace runs to a single space and (2) lo
 
 ---
 
+### 2026-06-03 — Test Infrastructure and Content-Hash URI Validation (Ash)
+
+**Author:** Ash
+
+Test validation of Demo A content-hash URI changes and Demo B frontend improvements across two draft PRs. Comprehensive test suites written and passing:
+
+- **Demo A (node:test):** 32 tests covering `resource-uri.ts` (12 tests) and `query-cache.ts` extensions (20 tests). Validates: manifest-first URI resolution, runtime hash fallback, LRU cache eviction, key normalisation (whitespace + case).
+- **Demo B (Vitest + RTL):** 63 tests covering new `PanelErrorBoundary`, `ProgressPanel`, `usePanels` module-level store, and Zod `toolSchemas`. Validates: error recovery, state management, schema validation, component lifecycle.
+- **Total:** 95/95 tests passing, no blocking issues.
+- **CI scripts:** `scripts/run-tests.sh` and `scripts/run-tests.ps1` committed for GitHub Actions integration.
+- **Non-blocking cosmetic note:** Dashboard tests emit React `act()` warnings from CopilotKit subscription events; not production bugs.
+
+**Recommendations:**
+1. Merge `feat/demo-a/content-hash-uri` and `feat/demo-b/frontend-improvements` before or alongside PR #44.
+2. After `feat/demo-a/content-hash-uri` merges, update `resource-uri.ts` field name (`uri` → `resourceUri`) and hash length (16 → 12 chars).
+3. Add GitHub Actions job: `scripts/run-tests.sh` on Node 22 + pnpm 9.
+
+**References:** PR #44 (https://github.com/dotnetspark/vehicle-genui-poc/pull/44); `src/demo-a-mcp-apps/query-cache.ts`; `src/demo-a-mcp-apps/resource-uri.ts`; `src/demo-b-copilotkit/frontend/src/schemas/toolSchemas.ts`.
+
 ## Active Decisions
 
 No new active decisions as of 2026-06-03.
