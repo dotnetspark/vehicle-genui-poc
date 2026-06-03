@@ -25,5 +25,33 @@
 
 
 
-- Constitution v1.1.0 is in force. Article III was amended on 2026-05-08 (issue #10): each demo owns its own generic SQL-execution tool via the canonical SDK; original "must use `@modelcontextprotocol/server-postgres`" requirement was replaced with "Demo A uses `@modelcontextprotocol/sdk` + `@modelcontextprotocol/ext-apps` + `pg` over Streamable HTTP".
-- Currently on branch `feat/002-demo-a-mcp-apps`. Phase 1 of Feature 002 complete (skeleton: package.json, tsconfig, vite.config, mcp-app.html placeholder). Phase 2 (Server, issue #6) is the active work.
+## 2026-06-03 — 5 Demo A quick-win features (issues #32–#36)
+
+### What was done
+
+Created 5 independent feature branches off `main`, each with a focused PR:
+
+| Branch | PR | Issue | Target files |
+|---|---|---|---|
+| `feat/demo-a/lru-query-cache` | #38 | #32 | `server.ts`, `query-cache.ts`, `query-cache.test.ts`, `package.json` |
+| `feat/demo-a/content-hash-uri` | #40 | #33 | `server.ts`, `vite.config.ts` |
+| `feat/demo-a/render-telemetry` | #41 | #34 | `src/chart-renderer.ts` |
+| `feat/demo-a/line-chart-heuristics` | #42 | #35 | `src/chart-renderer.ts` |
+| `feat/demo-a/progressive-render` | #43 | #36 | `src/chart-renderer.ts` |
+
+### Key implementation notes
+
+- **LRU cache** (`query-cache.ts`): standalone module, `lru-cache v11`; `normalizeSQL` collapses whitespace + lowercases; singleton `queryCache`; `CACHE_MAX`/`CACHE_TTL` env vars. 11 unit tests with Node 22 built-in runner. Cache is populated only on successful queries (not errors).
+- **Content-hash URI**: Vite `write-resource-uri` plugin writes `dist/resource-uri.json` at build time. `resolveResourceUri()` has 3-level fallback: manifest → runtime SHA-256 → legacy URI. Both `registerAppTool` and `registerAppResource` consume `RESOURCE_URI`.
+- **Render telemetry**: `performance.now()` wraps the render call; `[telemetry]` log + `CustomEvent("chart-render")` dispatched on `document` for integration test hooks.
+- **Line chart heuristics**: Added rule 2 (`month`/`date`/`year_quarter` cols) and rule 3 (year-only + numeric + >1 row). `renderLine` xLabel resolver handles 5 temporal shapes.
+- **Progressive render**: `PROGRESSIVE_THRESHOLD=200`, `CHUNK_SIZE=150`; DOM structure mounted sync for instant first paint; `requestAnimationFrame` chain streams tbody rows for large sets.
+
+### Git confusion encountered
+
+Working on Windows, `git checkout` sometimes silently remained on `feat/demo-a/backend-cache` (pre-existing WIP branch) when switching branches. Symptoms: `HEAD` points to unexpected commit; `git branch --show-current` is the authoritative check. Always verify branch before committing.
+
+### Stash hygiene
+
+`stash@{0}` (ripley-save-all-wip) and `stash@{1}` (wip-demo-a-quick-wins) from the previous session were left in place. They combine features 1+2 together and should NOT be `git stash pop`d — they will corrupt clean feature branches.
+
