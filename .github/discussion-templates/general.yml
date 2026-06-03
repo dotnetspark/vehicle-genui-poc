@@ -1,0 +1,32 @@
+title: General Discussion
+labels: ["general"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # General Discussion
+        
+        Use this category for open-ended questions, feedback, or topics that don't fit the other categories.
+        
+        **Before posting, please:**
+        - Check existing discussions to avoid duplicates
+        - Include context: what are you trying to do, and what happened?
+        - If you've found something interesting (a pattern, an edge case, a potential improvement), share it!
+        
+        This is a community space. We're all here to learn from the comparison and improve it together.
+        
+  - type: textarea
+    attributes:
+      label: What's on your mind?
+      description: Feel free to share your thoughts, questions, or feedback.
+      placeholder: "Tell us what you're thinking about..."
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Context
+      description: Optional — any additional context that helps us understand your message.
+      placeholder: "e.g., what demo are you looking at? What's the broader goal?"
+    validations:
+      required: false
