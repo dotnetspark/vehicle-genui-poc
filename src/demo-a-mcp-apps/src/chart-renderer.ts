@@ -364,6 +364,11 @@ function renderDonut(rows: Record<string, unknown>[]): void {
   });
 }
 
+/** Rows above this threshold trigger incremental rAF-based table rendering. */
+const PROGRESSIVE_THRESHOLD = 200;
+/** Number of rows appended per animation frame in progressive mode. */
+const CHUNK_SIZE = 150;
+
 function renderTable(rows: Record<string, unknown>[]): void {
   const root = getRoot();
   if (!rows.length) {
@@ -398,20 +403,46 @@ function renderTable(rows: Record<string, unknown>[]): void {
   table.appendChild(thead);
 
   const tbody = document.createElement("tbody");
-  rows.forEach((row, i) => {
-    const tr = document.createElement("tr");
-    if (i % 2 === 1) tr.style.background = "rgba(99,102,241,0.04)";
-    headers.forEach((h) => {
-      const td = document.createElement("td");
-      td.textContent = String(row[h] ?? "");
-      td.style.cssText = "padding:8px 14px;border-bottom:1px solid rgba(15,23,42,0.05)";
-      tr.appendChild(td);
-    });
-    tbody.appendChild(tr);
-  });
   table.appendChild(tbody);
   wrap.appendChild(table);
   root.appendChild(wrap);
+
+  function appendChunk(startIndex: number): void {
+    const end = Math.min(startIndex + CHUNK_SIZE, rows.length);
+    for (let i = startIndex; i < end; i++) {
+      const row = rows[i];
+      const tr = document.createElement("tr");
+      if (i % 2 === 1) tr.style.background = "rgba(99,102,241,0.04)";
+      headers.forEach((h) => {
+        const td = document.createElement("td");
+        td.textContent = String(row[h] ?? "");
+        td.style.cssText = "padding:8px 14px;border-bottom:1px solid rgba(15,23,42,0.05)";
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
+    if (end < rows.length) {
+      requestAnimationFrame(() => appendChunk(end));
+    }
+  }
+
+  if (rows.length > PROGRESSIVE_THRESHOLD) {
+    // Large result sets: paint the first chunk immediately, then stream the
+    // rest frame-by-frame so the browser stays responsive.
+    appendChunk(0);
+  } else {
+    rows.forEach((row, i) => {
+      const tr = document.createElement("tr");
+      if (i % 2 === 1) tr.style.background = "rgba(99,102,241,0.04)";
+      headers.forEach((h) => {
+        const td = document.createElement("td");
+        td.textContent = String(row[h] ?? "");
+        td.style.cssText = "padding:8px 14px;border-bottom:1px solid rgba(15,23,42,0.05)";
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------

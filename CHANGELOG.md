@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Demo A — progressive table rendering for large result sets.**
+  `renderTable()` in `src/chart-renderer.ts` now uses a
+  `requestAnimationFrame`-based chunked append for result sets larger than
+  `PROGRESSIVE_THRESHOLD` (200 rows).  Each frame appends up to `CHUNK_SIZE`
+  (150) rows, keeping the browser responsive and giving the user immediate
+  visual feedback.  Result sets ≤ 200 rows use the original synchronous path
+  (no behaviour change).  Closes #36.
+
 ### Changed
 
 - **Demo A system prompt — MCP-first routing + comparison-shape hint.**
