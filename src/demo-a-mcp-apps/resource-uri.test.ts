@@ -51,14 +51,14 @@ function makeFs(
 describe("resolveResourceUri — manifest path", () => {
   it("returns the uri field from dist/resource-uri.json when readable", async () => {
     const expectedUri = "ui://vehicle/chart-renderer/abcdef1234567890.html";
-    const fs = makeFs(JSON.stringify({ uri: expectedUri }), null);
+    const fs = makeFs(JSON.stringify({ resourceUri: expectedUri }), null);
     const uri = await resolveResourceUri("/fake/base", fs);
     assert.equal(uri, expectedUri);
   });
 
   it("returns the uri even when manifest contains extra fields", async () => {
     const expected = "ui://vehicle/chart-renderer/deadbeef01234567.html";
-    const payload = JSON.stringify({ uri: expected, hash: "deadbeef01234567", htmlFile: "mcp-app.html" });
+    const payload = JSON.stringify({ resourceUri: expected, hash: "deadbeef01234567", htmlFile: "mcp-app.html" });
     const fs = makeFs(payload, null);
     const uri = await resolveResourceUri("/fake/base", fs);
     assert.equal(uri, expected);
@@ -72,19 +72,19 @@ describe("resolveResourceUri — manifest path", () => {
 describe("resolveResourceUri — runtime hash path", () => {
   it("falls back to SHA-256 hash of mcp-app.html when manifest is missing", async () => {
     const htmlContent = Buffer.from("<html>test content</html>");
-    const expected = createHash("sha256").update(htmlContent).digest("hex").slice(0, 16);
+    const expected = createHash("sha256").update(htmlContent).digest("hex").slice(0, 12);
     const fs = makeFs(null, htmlContent);
     const uri = await resolveResourceUri("/fake/base", fs);
     assert.equal(uri, `ui://vehicle/chart-renderer/${expected}.html`);
   });
 
-  it("hash segment is exactly 16 lowercase hex characters", async () => {
+  it("hash segment is exactly 12 lowercase hex characters", async () => {
     const htmlContent = Buffer.from("any html content here");
     const fs = makeFs(null, htmlContent);
     const uri = await resolveResourceUri("/fake/base", fs);
     const match = uri.match(/\/([a-f0-9]+)\.html$/);
     assert.ok(match, "URI should end with .<hex>.html");
-    assert.equal(match![1].length, 16, `expected 16-char hash, got "${match![1]}"`);
+    assert.equal(match![1].length, 12, `expected 12-char hash, got "${match![1]}"`);
   });
 
   it("different html content produces different URIs", async () => {
@@ -128,7 +128,7 @@ describe("resolveResourceUri — fallback path", () => {
 describe("resolveResourceUri — URI format", () => {
   it("all resolved URIs start with ui://vehicle/chart-renderer/", async () => {
     const cases: FsAdapter[] = [
-      makeFs(JSON.stringify({ uri: "ui://vehicle/chart-renderer/abc1234567890123.html" }), null),
+      makeFs(JSON.stringify({ resourceUri: "ui://vehicle/chart-renderer/abc1234567890123.html" }), null),
       makeFs(null, Buffer.from("<html/>")),
       makeFs(null, null),
     ];
@@ -142,7 +142,7 @@ describe("resolveResourceUri — URI format", () => {
   it("manifest path is preferred over runtime hash when both would succeed", async () => {
     const manifestUri = "ui://vehicle/chart-renderer/from-manifest.html";
     const fs = makeFs(
-      JSON.stringify({ uri: manifestUri }),
+      JSON.stringify({ resourceUri: manifestUri }),
       Buffer.from("<html>some content</html>"),
     );
     const uri = await resolveResourceUri("/fake/base", fs);
@@ -169,9 +169,9 @@ describe("resolveResourceUri — integration (actual dist/resource-uri.json)", (
     // Read the JSON directly to compare.
     const { default: fs } = await import("node:fs/promises");
     const raw = await fs.readFile(path.join(moduleDir, "dist", "resource-uri.json"), "utf8");
-    const manifest = JSON.parse(raw) as { uri: string };
+    const manifest = JSON.parse(raw) as { resourceUri: string };
     const resolved = await resolveResourceUri(moduleDir);
-    assert.equal(resolved, manifest.uri,
-      "resolveResourceUri() must return exactly the uri from dist/resource-uri.json");
+    assert.equal(resolved, manifest.resourceUri,
+      "resolveResourceUri() must return exactly the resourceUri from dist/resource-uri.json");
   });
 });

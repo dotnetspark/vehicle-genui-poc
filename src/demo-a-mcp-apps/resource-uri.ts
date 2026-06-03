@@ -42,9 +42,9 @@ export async function resolveResourceUri(
   const jsonPath = path.join(baseDir, "dist", "resource-uri.json");
   try {
     const raw = await fsAdapter.readText(jsonPath);
-    const manifest = JSON.parse(raw) as { uri: string };
-    console.log(`UI resource URI (manifest): ${manifest.uri}`);
-    return manifest.uri;
+    const manifest = JSON.parse(raw) as { resourceUri: string };
+    console.log(`UI resource URI (manifest): ${manifest.resourceUri}`);
+    return manifest.resourceUri;
   } catch {
     // No manifest — try runtime hash.
   }
@@ -52,7 +52,7 @@ export async function resolveResourceUri(
   const htmlPath = path.join(baseDir, "dist", "mcp-app.html");
   try {
     const content = await fsAdapter.readBuf(htmlPath);
-    const hash = createHash("sha256").update(content).digest("hex").slice(0, 16);
+    const hash = createHash("sha256").update(content).digest("hex").slice(0, 12);
     const uri = `ui://vehicle/chart-renderer/${hash}.html`;
     console.log(`UI resource URI (runtime hash): ${uri}`);
     return uri;

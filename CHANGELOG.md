@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Demo A — `resource-uri`: renamed manifest field `uri` → `resourceUri` and shortened content-hash from 16 to 12 hex chars** (`fix/resource-uri-field`).
+  Per advisory from Ash following the content-hash merge: `dist/resource-uri.json` now emits `resourceUri` instead of `uri`; `resolveResourceUri()` reads `resourceUri`; the runtime SHA-256 fallback is truncated to 12 characters.
+  `dist/resource-uri.json` updated to match (`hash` and `resourceUri` both reflect the 12-char prefix).
+  **Breaking**: any consumer that read `dist/resource-uri.json`'s `uri` field must switch to `resourceUri`.
+
 ### Added
 
 - **Tests — Demo A + B comprehensive test suite (`chore/tests/demo-a-b`).**
