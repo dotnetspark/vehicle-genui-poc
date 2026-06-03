@@ -1,8 +1,3 @@
-# Data — raw CSVs are user-supplied and never committed
-data/*.csv
-data/*.parquet
-data/*.tsv
-
 # Python
 __pycache__/
 *.py[cod]
