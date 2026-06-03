@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Demo A — content-hash resource URIs for the UI bundle.**
+  `vite.config.ts` gains a `write-resource-uri` Vite plugin that SHA-256
+  hashes `dist/mcp-app.html` at build time and writes `dist/resource-uri.json`.
+  `server.ts` reads the manifest at startup via `resolveResourceUri()` (runtime
+  SHA-256 fallback, then legacy-URI fallback).  Both `registerAppTool`
+  `_meta.ui.resourceUri` and `registerAppResource` now use the
+  content-addressed `RESOURCE_URI` constant — cache-busting is automatic
+  whenever the bundle changes.  Closes #33.
+
 ### Changed
 
 - **Demo A system prompt — MCP-first routing + comparison-shape hint.**
