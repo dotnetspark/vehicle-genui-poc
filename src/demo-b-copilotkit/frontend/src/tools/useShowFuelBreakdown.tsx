@@ -1,7 +1,9 @@
 import { useCopilotAction } from "@copilotkit/react-core";
-import { ChartSkeleton } from "../components/ChartSkeleton";
-import { FuelBreakdownChart, type FuelDatum } from "../components/FuelBreakdownChart";
+import { FuelBreakdownChart } from "../components/FuelBreakdownChart";
+import { ProgressPanel } from "../components/ProgressPanel";
 import { setPanel } from "../state/usePanels";
+import { ZShowFuelBreakdownArgs } from "../schemas/toolSchemas";
+import type { FuelDatum } from "../components/FuelBreakdownChart";
 
 export function useShowFuelBreakdown() {
   useCopilotAction({
@@ -25,14 +27,28 @@ export function useShowFuelBreakdown() {
         ],
       },
     ],
-    handler: async ({ panelId, title, data }: { panelId: string; title: string; data: FuelDatum[] }) => {
+    handler: async (rawArgs) => {
+      const parsed = ZShowFuelBreakdownArgs.safeParse(rawArgs);
+      if (!parsed.success) {
+        const msg = parsed.error.issues.map((i) => i.message).join("; ");
+        return { ok: false, error: `Validation failed: ${msg}` };
+      }
+      const { panelId, title, data } = parsed.data;
       setPanel(panelId, { kind: "fuel", title, data });
       return { ok: true, panelId };
     },
     render: ({ status, args }) => {
-      if (status !== "complete") return <ChartSkeleton />;
       const data = (args.data ?? []) as FuelDatum[];
-      return <FuelBreakdownChart data={data} />;
+      const hasPartial = data.length > 0;
+      if (status === "complete") return <FuelBreakdownChart data={data} />;
+      return (
+        <ProgressPanel
+          status={status}
+          itemCount={data.length}
+          partialContent={hasPartial ? <FuelBreakdownChart data={data} /> : undefined}
+        />
+      );
     },
   });
 }
+

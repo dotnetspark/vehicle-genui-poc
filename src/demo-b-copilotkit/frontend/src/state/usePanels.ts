@@ -7,7 +7,8 @@ export type PanelDescriptor =
   | { kind: "fuel"; title: string; data: FuelDatum[] }
   | { kind: "trend"; title: string; series: Series[] }
   | { kind: "makes"; title: string; data: MakeDatum[] }
-  | { kind: "skeleton"; title: string };
+  | { kind: "skeleton"; title: string }
+  | { kind: "error"; title: string; message: string; rawArgs?: unknown };
 
 type PanelMap = Record<string, PanelDescriptor>;
 

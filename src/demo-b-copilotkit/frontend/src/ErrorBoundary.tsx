@@ -16,19 +16,34 @@ export class ErrorBoundary extends React.Component<
     console.error("[ErrorBoundary]", error, info);
   }
 
+  private retry = () => this.setState({ error: null });
+
   render() {
     if (this.state.error) {
       return (
-        <div style={{ padding: 24, fontFamily: "monospace", color: "#b91c1c" }}>
-          <h1 style={{ fontSize: 18, marginBottom: 12 }}>App crashed</h1>
-          <pre style={{ whiteSpace: "pre-wrap" }}>
-            {this.state.error.message}
-            {"\n\n"}
-            {this.state.error.stack}
-          </pre>
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
+          <div className="w-full max-w-lg rounded-xl border border-red-200 bg-white p-8 shadow-sm">
+            <h1 className="mb-2 text-lg font-bold text-red-700">App crashed</h1>
+            <p className="mb-4 text-sm text-slate-600">{this.state.error.message}</p>
+            <button
+              onClick={this.retry}
+              className="mb-4 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400"
+            >
+              Retry
+            </button>
+            <details>
+              <summary className="cursor-pointer text-xs text-slate-400 hover:text-slate-600">
+                Stack trace
+              </summary>
+              <pre className="mt-2 max-h-64 overflow-auto rounded bg-slate-900 p-3 text-xs text-slate-100">
+                {this.state.error.stack}
+              </pre>
+            </details>
+          </div>
         </div>
       );
     }
     return this.props.children;
   }
 }
+

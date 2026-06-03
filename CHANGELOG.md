@@ -42,6 +42,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vite.config.ts` `write-resource-uri` plugin writes `dist/resource-uri.json`;
   `server.ts` reads it at startup.
 
+- **Demo B — Zod-validated tool parameter schemas** (`src/demo-b-copilotkit/frontend/src/schemas/toolSchemas.ts`).
+  All three `useCopilotAction` handlers now validate incoming args via Zod before
+  calling `setPanel`, returning `{ ok: false, error }` on schema violations rather
+  than silently rendering corrupt data.
+
+- **Demo B — Progressive rendering states in tool render callbacks.**
+  `ProgressPanel` component surfaces `pending → streaming (inProgress) → processing
+  (executing) → complete` states with a colour-coded badge overlay. When partial
+  data is available during streaming, the real chart renders immediately (with a
+  "Streaming… (N)" badge) rather than falling back to a blank skeleton.
+
+- **Demo B — Per-panel `PanelErrorBoundary`** with Retry and View raw data
+  affordances. Each dashboard panel is independently isolated; a render crash in
+  one panel no longer takes down the rest of the grid. The raw-data pane exposes
+  the serialised tool args as collapsible JSON for debugging.
+
+- **Demo B — `error` panel kind** in `usePanels` store — enables future
+  server-side tool failures to surface as first-class error cards in the dashboard.
+
 
 ### Changed
 
@@ -54,6 +73,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   repeated runs. No bundle change; users must re-paste
   `src/shared/system-prompt.md` into Claude Desktop ΓåÆ Settings ΓåÆ Profile ΓåÆ
   Custom Instructions and restart Claude Desktop to pick it up.
+
+- **Demo B — `ErrorBoundary` (app-level)** now uses Tailwind v4 classes for
+  consistent styling and adds a Retry button + collapsible stack trace, replacing
+  the legacy inline `style={}` fallback.
 
 ## [1.0.0] ΓÇö 2026-05-14
 

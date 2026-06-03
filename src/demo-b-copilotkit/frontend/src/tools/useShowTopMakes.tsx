@@ -1,7 +1,9 @@
 import { useCopilotAction } from "@copilotkit/react-core";
-import { ChartSkeleton } from "../components/ChartSkeleton";
-import { TopMakesTable, type MakeDatum } from "../components/TopMakesTable";
+import { TopMakesTable } from "../components/TopMakesTable";
+import { ProgressPanel } from "../components/ProgressPanel";
 import { setPanel } from "../state/usePanels";
+import { ZShowTopMakesArgs } from "../schemas/toolSchemas";
+import type { MakeDatum } from "../components/TopMakesTable";
 
 export function useShowTopMakes() {
   useCopilotAction({
@@ -22,14 +24,28 @@ export function useShowTopMakes() {
         ],
       },
     ],
-    handler: async ({ panelId, title, data }: { panelId: string; title: string; data: MakeDatum[] }) => {
+    handler: async (rawArgs) => {
+      const parsed = ZShowTopMakesArgs.safeParse(rawArgs);
+      if (!parsed.success) {
+        const msg = parsed.error.issues.map((i) => i.message).join("; ");
+        return { ok: false, error: `Validation failed: ${msg}` };
+      }
+      const { panelId, title, data } = parsed.data;
       setPanel(panelId, { kind: "makes", title, data });
       return { ok: true, panelId };
     },
     render: ({ status, args }) => {
-      if (status !== "complete") return <ChartSkeleton />;
       const data = (args.data ?? []) as MakeDatum[];
-      return <TopMakesTable data={data} />;
+      const hasPartial = data.length > 0;
+      if (status === "complete") return <TopMakesTable data={data} />;
+      return (
+        <ProgressPanel
+          status={status}
+          itemCount={data.length}
+          partialContent={hasPartial ? <TopMakesTable data={data} /> : undefined}
+        />
+      );
     },
   });
 }
+
