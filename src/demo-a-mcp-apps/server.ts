@@ -6,6 +6,11 @@
 // the embedded HTML resource (Task 2.4) per Constitution Article III v1.1.0.
 //
 // Run: npm run serve
+//
+// Runtime env vars:
+//   DATABASE_URL_READONLY — pg connection string (read-only role)
+//   CACHE_MAX             — LRU cache max entries (default: 100)
+//   CACHE_TTL             — LRU cache TTL in ms   (default: 300000 = 5 min)
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -20,6 +25,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { Pool, DatabaseError } from "pg";
 import { z } from "zod";
+import { queryCache } from "./query-cache.ts";
 
 const PORT = 3001;
 
@@ -133,6 +139,9 @@ console.log(
   `Schema cheatsheet built (${cheatsheet.length} chars); total instructions: ${SYSTEM_INSTRUCTIONS.length} chars.`
 );
 
+// Shared constant — used in both the cache-hit path and the live-query path.
+const MAX_ROWS_IN_TEXT = 50;
+
 // Build a fresh McpServer per request — required by the stateless StreamableHTTP
 // pattern (sessionIdGenerator: undefined). A shared McpServer cannot be connected
 // to multiple transports concurrently and would throw "Already connected to a
@@ -163,6 +172,25 @@ function buildServer(): McpServer {
       _meta: { ui: { resourceUri: "ui://vehicle/chart-renderer/mcp-app.v4.html" } },
     },
     async ({ sql }) => {
+      // Check cache first — avoids a round-trip to Postgres for repeated queries.
+      const cached = queryCache.get(sql);
+      if (cached) {
+        console.log(`[cache] hit rows=${cached.rows.length} key="${sql.trim().slice(0, 80)}"`);
+        const text =
+          `Returned ${cached.rows.length} rows (cached).\n\n` +
+          "```json\n" +
+          JSON.stringify(cached.rows.slice(0, MAX_ROWS_IN_TEXT), null, 2) +
+          "\n```" +
+          (cached.rows.length > MAX_ROWS_IN_TEXT
+            ? `\n… (${cached.rows.length - MAX_ROWS_IN_TEXT} more rows omitted from text; full set available in structuredContent.rows and rendered in the UI)`
+            : "");
+        return {
+          content: [{ type: "text" as const, text }],
+          structuredContent: { rows: cached.rows },
+          isError: false,
+        };
+      }
+
       try {
         const result = await pool.query(sql);
         // Echo the rows back in the `text` content so the LLM can reason
@@ -172,7 +200,6 @@ function buildServer(): McpServer {
         // LLM only sees a row-count and cannot answer follow-up questions
         // like "what was the top fuel type?". Truncated to keep context
         // bounded on large result sets.
-        const MAX_ROWS_IN_TEXT = 50;
         const preview = result.rows.slice(0, MAX_ROWS_IN_TEXT);
         const truncatedNote =
           result.rows.length > MAX_ROWS_IN_TEXT
@@ -184,6 +211,9 @@ function buildServer(): McpServer {
           JSON.stringify(preview, null, 2) +
           "\n```" +
           truncatedNote;
+        // Populate cache so identical queries skip Postgres on subsequent calls.
+        queryCache.set(sql, { rows: result.rows });
+        console.log(`[cache] miss — stored rows=${result.rows.length}`);
         return {
           content: [{ type: "text" as const, text }],
           structuredContent: { rows: result.rows },
@@ -234,6 +264,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Debug endpoint — returns LRU cache stats (size, max, TTL).
+// Not part of the MCP protocol; safe to expose on localhost only.
+app.get("/cache-stats", (_req, res) => {
+  res.json(queryCache.stats());
+});
 app.post("/mcp", async (req, res) => {
   try {
     const server = buildServer();
