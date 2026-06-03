@@ -8,7 +8,7 @@
     "build": "cross-env INPUT=mcp-app.html vite build",
     "serve": "tsx --env-file=../../.env server.ts",
     "start": "tsx --env-file=../../.env server.ts",
-    "test": "node --import tsx/esm --test query-cache.test.ts"
+    "test": "node --import tsx/esm --test query-cache.test.ts resource-uri.test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/ext-apps": "^1.6.0",

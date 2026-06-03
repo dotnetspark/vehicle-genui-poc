@@ -34,6 +34,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vite.config.ts` `write-resource-uri` plugin writes `dist/resource-uri.json`;
   `server.ts` reads it at startup.
 
+- **Tests/CI — Demo A node:test suite.**
+  `resource-uri.ts` extracted from `server.ts` with `FsAdapter` seam (18 tests).
+  `query-cache.ts` extended with `createQueryCache` factory; LRU eviction +
+  key-normalisation suites added (9 new tests on top of existing 11, 20 total).
+
+- **Tests/CI — Demo B Vitest frontend suite (63 tests, 7 files).**
+  New components: `PanelErrorBoundary`, `ProgressPanel`, `toolSchemas` (Zod).
+  `Dashboard` wraps panels in `PanelErrorBoundary`; `usePanels` adds error panel kind.
+
+- **Tests/CI — `scripts/run-tests.sh` + `scripts/run-tests.ps1`.**
+  Unified runner covering Demo A (node:test) + Demo B (Vitest); exits non-zero on failure.
+
+- **CI — `.github/workflows/ci.yml`.**
+  GitHub Actions running the full test suite on every push/PR to main (Node 22 + pnpm 9).
+
 
 ### Changed
 

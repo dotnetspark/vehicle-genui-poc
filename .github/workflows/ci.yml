@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test suite (Demo A + Demo B)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up pnpm 9
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install Demo A dependencies
+        working-directory: src/demo-a-mcp-apps
+        run: npm install
+
+      - name: Install Demo B frontend dependencies
+        working-directory: src/demo-b-copilotkit/frontend
+        run: pnpm install
+
+      - name: Run tests
+        run: bash scripts/run-tests.sh
