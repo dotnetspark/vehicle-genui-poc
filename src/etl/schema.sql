@@ -183,6 +183,32 @@ for vehicle/quarter combinations that did not exist; those are skipped at
 ETL time, not stored as zero.$$;
 
 -- =============================================================================
+-- Indexes — strategic columns for the analytical query patterns above.
+-- =============================================================================
+-- Index only where the planner will actually use it. Measured on the live
+-- ~19.7M-row fact table (see PR notes):
+--
+--   * dim_vehicle category filters ARE selective and benefit. A single-make
+--     time series (WHERE make = 'TOYOTA') drops to ~1.3s using idx_dim_vehicle_make
+--     → dim row → fact PK lookup by vehicle_id (the PK leads with vehicle_id).
+--
+--   * fact_registrations does NOT benefit from indexes on licence_status or
+--     period_id. Those predicates are low-selectivity (licence_status='Licensed'
+--     matches ~60% of rows; one year is ~4 of ~82 periods), so the planner
+--     correctly prefers a parallel seq scan for full-population aggregations.
+--     A covering (licence_status, vehicle_id) INCLUDE (count) index was tested
+--     and measured 691 MB, never chosen, and SLOWER when forced — so it is
+--     deliberately omitted. The real mitigation for the 10s readonly
+--     statement_timeout is fresh planner stats (ANALYZE) + parallel seq scan
+--     (~2.5–5s) plus the demo's LRU row cache for repeat queries.
+--
+-- dim_period (~82 rows) needs none beyond its UNIQUE (year, quarter).
+
+CREATE INDEX IF NOT EXISTS idx_dim_vehicle_make       ON dim_vehicle (make);
+CREATE INDEX IF NOT EXISTS idx_dim_vehicle_fuel       ON dim_vehicle (fuel);
+CREATE INDEX IF NOT EXISTS idx_dim_vehicle_body_type  ON dim_vehicle (body_type);
+
+-- =============================================================================
 -- v_schema_summary
 -- =============================================================================
 

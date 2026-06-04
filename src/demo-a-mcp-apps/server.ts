@@ -145,21 +145,32 @@ async function fetchSampleValues(
 ): Promise<string[] | null> {
   const sampleableTypes = ["text", "smallint", "integer", "bigint", "boolean"];
   if (!sampleableTypes.some((t) => dataType.startsWith(t))) return null;
-  const statsRes = await pool.query<{ n_distinct: number }>(
-    `SELECT n_distinct FROM pg_stats
-      WHERE schemaname = 'public' AND tablename = $1 AND attname = $2`,
-    [tableName, colName]
-  );
-  const nDistinct = statsRes.rows[0]?.n_distinct ?? 0;
-  // n_distinct < 0 = fractional (high cardinality). 0 = ANALYZE not run. Both skip.
-  if (nDistinct <= 0 || nDistinct > maxDistinct) return null;
-  const safeTable = tableName.replace(/[^a-z0-9_]/gi, "");
-  const safeCol   = colName.replace(/[^a-z0-9_]/gi, "");
-  const sampRes = await pool.query<{ v: unknown }>(
-    `SELECT DISTINCT "${safeCol}" AS v FROM "${safeTable}" ORDER BY 1 LIMIT $1`,
-    [limit]
-  );
-  return sampRes.rows.map((r) => String(r.v ?? ""));
+  // Sample values are a nice-to-have for the schema cheatsheet — they must never
+  // crash boot. On a large table the DISTINCT scan can exceed the readonly role's
+  // statement_timeout (57014); swallow any error and skip samples for that column.
+  try {
+    const statsRes = await pool.query<{ n_distinct: number }>(
+      `SELECT n_distinct FROM pg_stats
+        WHERE schemaname = 'public' AND tablename = $1 AND attname = $2`,
+      [tableName, colName]
+    );
+    const nDistinct = statsRes.rows[0]?.n_distinct ?? 0;
+    // n_distinct < 0 = fractional (high cardinality). 0 = ANALYZE not run. Both skip.
+    if (nDistinct <= 0 || nDistinct > maxDistinct) return null;
+    const safeTable = tableName.replace(/[^a-z0-9_]/gi, "");
+    const safeCol   = colName.replace(/[^a-z0-9_]/gi, "");
+    const sampRes = await pool.query<{ v: unknown }>(
+      `SELECT DISTINCT "${safeCol}" AS v FROM "${safeTable}" ORDER BY 1 LIMIT $1`,
+      [limit]
+    );
+    return sampRes.rows.map((r) => String(r.v ?? ""));
+  } catch (err) {
+    console.warn(
+      `[cheatsheet] sample values skipped for ${tableName}.${colName}: ` +
+      `${err instanceof Error ? err.message : String(err)}`
+    );
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -264,6 +275,11 @@ function buildServer(): McpServer {
     async ({ sql }) => {
       const cached = queryCache.get(sql);
       if (cached) {
+        const s = queryCache.stats();
+        console.log(
+          `[query_vehicles] CACHE HIT  rows=${cached.rows.length} ` +
+          `(hits=${s.hits} misses=${s.misses} hit_rate=${s.hit_rate?.toFixed(2) ?? "n/a"} size=${s.size}) :: ${sql.replace(/\s+/g, " ").slice(0, 80)}`
+        );
         const preview = cached.rows.slice(0, MAX_ROWS_IN_TEXT);
         const truncNote =
           cached.rows.length > MAX_ROWS_IN_TEXT
@@ -283,6 +299,11 @@ function buildServer(): McpServer {
             ? "\n... (" + (result.rows.length - MAX_ROWS_IN_TEXT) + " more rows omitted from text; full set in structuredContent.rows)"
             : "";
         queryCache.set(sql, { rows: result.rows });
+        const s = queryCache.stats();
+        console.log(
+          `[query_vehicles] CACHE MISS rows=${result.rows.length} ` +
+          `(hits=${s.hits} misses=${s.misses} hit_rate=${s.hit_rate?.toFixed(2) ?? "n/a"} size=${s.size}) :: ${sql.replace(/\s+/g, " ").slice(0, 80)}`
+        );
         return {
           content: [{ type: "text" as const, text: "Returned " + result.rows.length + " rows.\n\n```json\n" + JSON.stringify(preview, null, 2) + "\n```" + truncNote }],
           structuredContent: { rows: result.rows },
